@@ -20,7 +20,7 @@ chapter_names = list(chapter_to_url.keys())
 
 # === INPUT ===
 user_question = st.text_input("🔍 Ask your patent law question:", placeholder="e.g. What triggers a patent term adjustment?")
-selected_chapter = st.selectbox("📂 AND you MUST pick a chapter manually:", chapter_names)
+selected_chapter = st.selectbox("📂 AND you MUST pick a chapter manually (Click Here to access the subject matter index https://www.uspto.gov/web/offices/pac/mpep/mpep-index-a.html):", chapter_names)
 
 # === FUNCTIONS ===
 def download_pdf_text(pdf_url):
