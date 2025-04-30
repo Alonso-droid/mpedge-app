@@ -20,7 +20,7 @@ st.markdown(
     unsafe_allow_html=True
 )
 
-# MPEP chapter and appendix data with corrected PDF URLs
+# Chapter metadata
 chapter_data = [
     {"Chapter": "100", "Title": "Secrecy, Access, National Security, and Foreign Filing", "PDF": "https://www.uspto.gov/web/offices/pac/mpep/mpep-0100.pdf"},
     {"Chapter": "200", "Title": "Types and Status of Application; Benefit and Priority Claims", "PDF": "https://www.uspto.gov/web/offices/pac/mpep/mpep-0200.pdf"},
@@ -50,11 +50,7 @@ chapter_data = [
     {"Chapter": "2600", "Title": "Optional Inter Partes Reexamination", "PDF": "https://www.uspto.gov/web/offices/pac/mpep/mpep-2600.pdf"},
     {"Chapter": "2700", "Title": "Patent Terms, Adjustments, and Extensions", "PDF": "https://www.uspto.gov/web/offices/pac/mpep/mpep-2700.pdf"},
     {"Chapter": "2800", "Title": "Supplemental Examination", "PDF": "https://www.uspto.gov/web/offices/pac/mpep/mpep-2800.pdf"},
-    {"Chapter": "2900", "Title": "International Design Applications", "PDF": "https://www.uspto.gov/web/offices/pac/mpep/mpep-2900.pdf"},
-    {"Chapter": "Appendix R", "Title": "Patent Rules", "PDF": "https://www.uspto.gov/web/offices/pac/mpep/mpep-appendix-r-patent-rules.pdf"},
-    {"Chapter": "Appendix T", "Title": "Patent Cooperation Treaty", "PDF": "https://www.uspto.gov/web/offices/pac/mpep/mpep-appendix-t-pct.pdf"},
-    {"Chapter": "Appendix AI", "Title": "Administrative Instructions", "PDF": "https://www.uspto.gov/web/offices/pac/mpep/mpep-appendix-ai-admininstr.pdf"},
-    {"Chapter": "Appendix P", "Title": "Paris Convention", "PDF": "https://www.uspto.gov/web/offices/pac/mpep/mpep-appendix-p-paris.pdf"}
+    {"Chapter": "2900", "Title": "International Design Applications", "PDF": "https://www.uspto.gov/web/offices/pac/mpep/mpep-2900.pdf"}
 ]
 
 chapter_df = pd.DataFrame(chapter_data)
@@ -64,63 +60,63 @@ chapter_to_url = dict(zip(
 ))
 chapter_names = list(chapter_to_url.keys())
 
-# Multiselect (limit 3 chapters)
 question = st.text_input("💬 What is your patent law question?")
-selected_chapters = st.multiselect(
-    "📂 Select up to 3 MPEP Chapters to Search",
-    chapter_names,
-    max_selections=3
-)
+selected_chapters = st.multiselect("📚 Select up to 3 chapters to search", chapter_names, max_selections=3)
+deep_search = st.checkbox("🔎 Enable Detailed Search Mode (separate queries per chapter)")
 
-# If nothing selected, attempt auto-detection
-if not selected_chapters and question:
-    detected_chapter = None
-    for keyword, chapter_code in {
-        "delay": "2700", "adjustment": "2700", "design": "1500", "publication": "1100",
-        "cooperation": "1800", "rules": "Appendix R", "treaty": "Appendix T", "assignment": "300"
-    }.items():
-        if keyword in question.lower():
-            match = chapter_df[chapter_df["Chapter"] == chapter_code]
-            if not match.empty:
-                detected_chapter = "Chapter " + match.iloc[0]["Chapter"] + " – " + match.iloc[0]["Title"]
-                break
-    if detected_chapter:
-        selected_chapters = [detected_chapter]
-        st.success(f"✅ Auto-matched your question to **{detected_chapter}**")
+@st.cache_data(show_spinner="📥 Loading chapter PDF...")
+def download_pdf_text(url, max_chars=5000):
+    response = requests.get(url)
+    response.raise_for_status()
+    with BytesIO(response.content) as f:
+        doc = fitz.open(stream=f.read(), filetype="pdf")
+        text = "\n".join([page.get_text() for page in doc])
+        return text[:max_chars]  # trim to first X chars
 
 if st.button("🔍 Search") and question:
     if not selected_chapters:
-        st.warning("Please select up to 3 chapters or rephrase your question for auto-detection.")
+        st.warning("Please select at least one chapter.")
     else:
-        @st.cache_data(show_spinner="📥 Downloading PDFs...")
-        def download_pdf_text(url):
-            response = requests.get(url)
-            response.raise_for_status()
-            with BytesIO(response.content) as f:
-                return "\n".join([page.get_text() for page in fitz.open(stream=f.read(), filetype="pdf")])
-
-        context = ""
-        for chap in selected_chapters:
-            try:
-                context += f"\n\n---\n\n{chap}\n" + download_pdf_text(chapter_to_url[chap])
-            except Exception as e:
-                st.warning(f"⚠️ Could not load {chap}: {e}")
-
-        if len(context) > 100000:
-            st.error("⚠️ Context too large. Please reduce to fewer chapters.")
+        key = os.getenv("HUGGINGFACE_API_KEY")
+        if not key:
+            st.error("🔐 Hugging Face API key missing.")
         else:
-            with st.spinner("🤖 Analyzing your question..."):
-                key = os.getenv("HUGGINGFACE_API_KEY")
-                if not key:
-                    st.error("🔐 Hugging Face API key not found.")
+            headers = {"Authorization": f"Bearer {key}"}
+
+            if deep_search:
+                for chap in selected_chapters:
+                    try:
+                        raw = download_pdf_text(chapter_to_url[chap])
+                        payload = {
+                            "inputs": f"Question: {question}\n\nContext:\n{raw}",
+                            "parameters": {"max_new_tokens": 200}
+                        }
+                        r = requests.post("https://api-inference.huggingface.co/models/google/flan-t5-base", headers=headers, json=payload)
+                        if r.status_code == 200:
+                            out = r.json()
+                            ans = out[0]['generated_text'] if isinstance(out, list) else out
+                            st.markdown(f"### 🧠 Response from {chap}")
+                            st.markdown(f"<div style='padding:1rem;background:#f9f9f9;border-radius:8px'>{ans}</div>", unsafe_allow_html=True)
+                        else:
+                            st.warning(f"⚠️ Failed on {chap}: {r.text}")
+                    except Exception as e:
+                        st.warning(f"⚠️ Could not process {chap}: {e}")
+            else:
+                context = ""
+                for chap in selected_chapters:
+                    try:
+                        context += f"\n\n---\n\n{chap}\n" + download_pdf_text(chapter_to_url[chap])
+                    except Exception as e:
+                        st.warning(f"⚠️ Skipping {chap}: {e}")
+                payload = {
+                    "inputs": f"Question: {question}\n\nContext:\n{context[:15000]}",
+                    "parameters": {"max_new_tokens": 200}
+                }
+                r = requests.post("https://api-inference.huggingface.co/models/google/flan-t5-base", headers=headers, json=payload)
+                if r.status_code == 200:
+                    out = r.json()
+                    ans = out[0]['generated_text'] if isinstance(out, list) else out
+                    st.markdown("### 🧠 Combined AI Response")
+                    st.markdown(f"<div style='padding:1rem;background:#eef;border-radius:8px'>{ans}</div>", unsafe_allow_html=True)
                 else:
-                    headers = {"Authorization": f"Bearer {key}"}
-                    payload = {"inputs": f"Question: {question}\n\nContext:\n{context}", "parameters": {"max_new_tokens": 200}}
-                    r = requests.post("https://api-inference.huggingface.co/models/google/flan-t5-base", headers=headers, json=payload)
-                    if r.status_code == 200:
-                        out = r.json()
-                        ans = out[0]['generated_text'] if isinstance(out, list) else out
-                        st.markdown("### 🧠 AI Response")
-                        st.markdown(f"""<div style='padding:1rem;border-radius:10px;background:#f8f9fa;box-shadow:0 0 10px rgba(0,0,0,0.05);'>{ans}</div>""", unsafe_allow_html=True)
-                    else:
-                        st.error(f"⚠️ Hugging Face error: {r.text}")
+                    st.error(f"❌ Error: {r.text}")
