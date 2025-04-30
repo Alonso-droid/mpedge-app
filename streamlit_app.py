@@ -21,7 +21,7 @@ st.markdown("##### AI-powered answers from the MPEP, straight from the USPTO")
 # === Load MPEP Overview from USPTO Excel ===
 @st.cache_data
 def load_chapter_index():
-    url = "https://githubusercontent.com/Alonso-droid/mpedge-app/blob/main/MPEP%20overview.xlsx"  # You will need to host this Excel file somewhere public
+    url = "https://raw.githubusercontent.com/Alonso-droid/mpedge-app/blob/main/MPEP%20overview.xlsx"  # You will need to host this Excel file somewhere public
     df = pd.read_excel(url, skiprows=3)
     df = df.dropna(subset=["PDF Link from USPTO Website"])
     df["MPEP Chapter"] = df["MPEP Chapter"].astype(str).str.strip()
