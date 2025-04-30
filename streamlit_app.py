@@ -96,10 +96,10 @@ if st.button("🔍 Search"):
                             "inputs": f"Answer the question based only on this context:\n\n{text}\n\nQuestion: {question}",
                             "parameters": {"max_new_tokens": 300}
                         }
-                        response = requests.post(
-                            "https://api-inference.huggingface.co/models/mistralai/Mistral-7B-Instruct-v0.1",
-                            headers=headers,
-                            json=payload
+                       response = requests.post(
+    "https://api-inference.huggingface.co/models/google/flan-t5-base",
+    headers=headers,
+    json={"inputs": f"Question: {question}\n\nContext:\n{text}", "parameters": {"max_new_tokens": 300}}
                         )
                         if response.status_code == 200:
                             output = response.json()
