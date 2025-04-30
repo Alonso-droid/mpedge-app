@@ -14,7 +14,7 @@ HF_API_URL = "https://api-inference.huggingface.co/models/mistralai/Mistral-7B-I
 HF_HEADERS = {"Authorization": "Bearer YOUR_HUGGINGFACE_API_KEY"}  # Set this in Streamlit secrets
 
 # === LOGO ===
-st.image("https://raw.githubusercontent.com/Alonso-droid/mpedge-app/blob/main/MPEdge%20logo.png", width=80)
+st.image("https://github.com/Alonso-droid/mpedge-app/blob/main/MPEdge%20logo.png", width=80)
 st.title("📘 MPEdge")
 st.markdown("##### AI-powered answers from the MPEP, straight from the USPTO")
 
