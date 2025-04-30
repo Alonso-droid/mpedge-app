@@ -93,13 +93,13 @@ if st.button("🔍 Search"):
                     else:
                         headers = {"Authorization": f"Bearer {HUGGINGFACE_API_KEY}"}
                         payload = {
-                            "inputs": f"Answer the question based only on this context:\n\n{text}\n\nQuestion: {question}",
+                            "inputs": f"Question: {question}\n\nContext:\n{text}",
                             "parameters": {"max_new_tokens": 300}
                         }
-                       response = requests.post(
+                        response = requests.post(
                             "https://api-inference.huggingface.co/models/google/flan-t5-base",
-                              headers=headers,
-                              json={"inputs": f"Question: {question}\n\nContext:\n{text}", "parameters": {"max_new_tokens": 300}}
+                            headers=headers,
+                            json=payload
                         )
                         if response.status_code == 200:
                             output = response.json()
