@@ -8,38 +8,45 @@ import os
 from thefuzz import fuzz
 
 st.set_page_config(page_title="MPEdge", layout="wide")
-st.markdown("""
+
+# --- Dark Mode Toggle ---
+dark_mode = st.toggle("🌙 Dark Mode")
+background = "#0e1117" if dark_mode else "#f9f9f9"
+text_color = "#fafafa" if dark_mode else "#1a1a1a"
+accent = "#00acc1" if dark_mode else "#007acc"
+box_shadow = "rgba(255,255,255,0.05)" if dark_mode else "rgba(0,0,0,0.08)"
+
+st.markdown(f"""
     <style>
-        body {
+        body {{
             font-family: 'Segoe UI', sans-serif;
-        }
-        .dark-mode-toggle {
-            position: fixed;
-            top: 1rem;
-            right: 2rem;
-        }
-        .chapter-tag {
+            background-color: {background};
+            color: {text_color};
+        }}
+        .chapter-tag {{
             display: inline-block;
             padding: 0.25em 0.6em;
             font-size: 0.85rem;
             font-weight: 600;
-            background: #007acc;
+            background: {accent};
             color: white;
             border-radius: 0.5rem;
             margin-right: 0.5rem;
-        }
+        }}
     </style>
 """, unsafe_allow_html=True)
 
+# --- Logo/Header ---
 with st.container():
-    st.markdown("""
+    st.markdown(f"""
         <div style="text-align: center; padding-top: 1rem;">
             <img src="https://raw.githubusercontent.com/Alonso-droid/mpedge-app/main/MPEdge%20logo.png" width="300">
-            <h1 style="font-size: 2.5rem; color: #1a1a1a;">📘 MPEdge</h1>
-            <p style="font-size: 1.2rem; color: #555;">AI-powered answers from the MPEP, straight from the USPTO</p>
+            <h1 style="font-size: 2.5rem; color: {text_color};">📘 MPEdge</h1>
+            <p style="font-size: 1.2rem; color: #999;">AI-powered answers from the MPEP, straight from the USPTO</p>
         </div>
     """, unsafe_allow_html=True)
 
+# --- Help Link ---
 st.markdown("""
     <div style='margin: 1rem 0; font-size: 1.05rem;'>
         📖 <strong>Need help choosing a chapter?</strong><br>
@@ -47,7 +54,14 @@ st.markdown("""
     </div>
 """, unsafe_allow_html=True)
 
-chapter_data = [...]  # Assume defined elsewhere
+# --- Repaired Chapter Data ---
+chapter_data = [
+    {"Chapter": "2700", "Title": "Patent Terms, Adjustments, and Extensions", "PDF": "https://www.uspto.gov/web/offices/pac/mpep/mpep-2700.pdf"},
+    {"Chapter": "2800", "Title": "Supplemental Examination", "PDF": "https://www.uspto.gov/web/offices/pac/mpep/mpep-2800.pdf"},
+    {"Chapter": "2900", "Title": "International Design Applications", "PDF": "https://www.uspto.gov/web/offices/pac/mpep/mpep-2900.pdf"},
+    {"Chapter": "1500", "Title": "Design Patents", "PDF": "https://www.uspto.gov/web/offices/pac/mpep/mpep-1500.pdf"},
+    {"Chapter": "2100", "Title": "Patentability", "PDF": "https://www.uspto.gov/web/offices/pac/mpep/mpep-2100.pdf"}
+]
 
 chapter_df = pd.DataFrame(chapter_data)
 chapter_to_url = dict(zip(
@@ -56,8 +70,9 @@ chapter_to_url = dict(zip(
 ))
 chapter_names = list(chapter_to_url.keys())
 
+# --- Inputs ---
 with st.container():
-    st.markdown("### 🔍 Ask a Patent Question")
+    st.markdown("### 🔎 Ask a Patent Question")
     question = st.text_input("💬 Enter your patent law question", placeholder="e.g. What is a restriction requirement?")
     selected_chapters = st.multiselect("📚 Select up to 3 MPEP chapters", chapter_names, max_selections=3)
     deep_search = st.checkbox("🔎 Enable Detailed Search Mode (runs separate searches for each chapter)")
@@ -68,8 +83,7 @@ def download_pdf_text(url, max_chars=5000):
     response.raise_for_status()
     with BytesIO(response.content) as f:
         doc = fitz.open(stream=f.read(), filetype="pdf")
-        text = "\n".join([page.get_text() for page in doc])
-        return text[:max_chars]
+        return "\n".join([page.get_text() for page in doc])[:max_chars]
 
 if st.button("🔍 Search") and question:
     if not selected_chapters:
@@ -80,7 +94,6 @@ if st.button("🔍 Search") and question:
             st.error("🔐 Hugging Face API key not found.")
         else:
             headers = {"Authorization": f"Bearer {key}"}
-
             if deep_search:
                 st.markdown("## 🔬 Chapter-by-Chapter Results")
                 for chap in selected_chapters:
@@ -95,9 +108,9 @@ if st.button("🔍 Search") and question:
                             out = r.json()
                             ans = out[0]['generated_text'] if isinstance(out, list) else out
                             st.markdown(f"""
-                                <div style='background: linear-gradient(145deg, #f3f4f7, #e0e2e5); padding: 1rem 1.5rem; margin: 1rem 0; border-radius: 12px; box-shadow: 2px 2px 8px rgba(0,0,0,0.08);'>
-                                    <div class='chapter-tag'>{chap}</div>
-                                    <div style='margin-top: 0.5rem; font-size: 1rem; color: #333;'>{ans}</div>
+                                <div style='background: {background}; border-left: 6px solid {accent}; padding: 1rem; margin: 1rem 0; border-radius: 12px; box-shadow: 2px 2px 8px {box_shadow};'>
+                                    <span class='chapter-tag'>{chap}</span>
+                                    <div style='margin-top: 0.5rem; font-size: 1rem; color: {text_color};'>{ans}</div>
                                 </div>
                             """, unsafe_allow_html=True)
                         else:
@@ -121,8 +134,8 @@ if st.button("🔍 Search") and question:
                     ans = out[0]['generated_text'] if isinstance(out, list) else out
                     st.markdown("## 💡 Combined AI Answer")
                     st.markdown(f"""
-                        <div style='background: linear-gradient(to right, #e0f7fa, #e1f5fe); border-left: 6px solid #00acc1; padding: 1.2rem; margin-top: 1rem; border-radius: 10px;'>
-                            <div style='font-size: 1.1rem; color: #1a1a1a;'>{ans}</div>
+                        <div style='background: linear-gradient(to right, #e0f7fa, #e1f5fe); border-left: 6px solid {accent}; padding: 1.2rem; margin-top: 1rem; border-radius: 10px;'>
+                            <div style='font-size: 1.1rem; color: {text_color};'>{ans}</div>
                         </div>
                     """, unsafe_allow_html=True)
                 else:
