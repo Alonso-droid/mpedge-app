@@ -1,5 +1,6 @@
 
 import streamlit as st
+import pandas as pd
 import requests
 from PyPDF2 import PdfReader
 import io
@@ -8,27 +9,35 @@ from thefuzz import fuzz
 
 st.set_page_config(page_title="📘 MPEdge – AI-Powered MPEP", layout="wide")
 
-# -- CONFIGURATION --
+# === CONFIG ===
 HF_API_URL = "https://api-inference.huggingface.co/models/mistralai/Mistral-7B-Instruct-v0.1"
-HF_HEADERS = {"Authorization": "Bearer YOUR_HUGGINGFACE_API_KEY"}  # Replace in secrets
+HF_HEADERS = {"Authorization": "Bearer YOUR_HUGGINGFACE_API_KEY"}  # Set this in Streamlit secrets
 
-MPEP_FILES = {
-    "mpep-2700.pdf": {
-        "title": "Chapter 2700 – Patent Terms, Adjustments, and Extensions",
-        "url": "https://drive.google.com/uc?export=download&id=1JrKFc-TYpKi9yx2w52Aj-VzTiYO9AzXJ"
-    },
-    "mpep-2800.pdf": {
-        "title": "Chapter 2800 – Supplemental Examination",
-        "url": "https://drive.google.com/uc?export=download&id=1neThbfH-CHGxyGDjr0txEpgOqFskmF1x"
-    },
-    "mpep-2900.pdf": {
-        "title": "Chapter 2900 – International Design Applications",
-        "url": "https://drive.google.com/uc?export=download&id=1GHjohcfCO1ZmdZugUNtZoD2WcnXbmnNn"
-    }
-}
+# === LOGO ===
+st.image("https://upload.wikimedia.org/wikipedia/commons/thumb/4/43/Blue_book_icon.svg/2048px-Blue_book_icon.svg.png", width=80)
+st.title("📘 MPEdge")
+st.markdown("##### AI-powered answers from the MPEP, straight from the USPTO")
 
-# -- HELPER FUNCTIONS --
+# === Load MPEP Overview from USPTO Excel ===
 @st.cache_data
+def load_chapter_index():
+    url = "https://YOUR_REPO_OR_CDN_LINK_HERE/MPEP overview.xlsx"  # You will need to host this Excel file somewhere public
+    df = pd.read_excel(url, skiprows=3)
+    df = df.dropna(subset=["PDF Link from USPTO Website"])
+    df["MPEP Chapter"] = df["MPEP Chapter"].astype(str).str.strip()
+    df["Title"] = df["Title"].str.strip()
+    df["PDF Link from USPTO Website"] = df["PDF Link from USPTO Website"].str.strip()
+    df["display_name"] = "Chapter " + df["MPEP Chapter"] + " – " + df["Title"]
+    return dict(zip(df["display_name"], df["PDF Link from USPTO Website"]))
+
+chapter_to_url = load_chapter_index()
+chapter_names = list(chapter_to_url.keys())
+
+# === INPUT ===
+user_question = st.text_input("🔍 Ask your patent law question:", placeholder="e.g. What triggers a patent term adjustment?")
+selected_chapter = st.selectbox("📂 Or pick a chapter manually:", chapter_names)
+
+# === FUNCTIONS ===
 def download_pdf_text(pdf_url):
     response = requests.get(pdf_url)
     response.raise_for_status()
@@ -46,41 +55,33 @@ def search_content(query, full_text):
     return ranked[:2]
 
 def summarize_with_llm(query, context):
-    prompt = f"Answer the following patent question using the context below.\n\nQuestion: {query}\n\nContext:\n{context}\n\nAnswer:"
+    prompt = f"Answer the following patent law question using the context.\n\nQuestion: {query}\n\nContext:\n{context}\n\nAnswer:"
     response = requests.post(HF_API_URL, headers=HF_HEADERS, json={"inputs": prompt})
     if response.status_code == 200:
         return response.json()[0]["generated_text"].split("Answer:")[-1].strip()
     else:
         return "⚠️ Error from Hugging Face API: " + response.text
 
-# -- UI LAYOUT --
-st.title("📘 MPEdge")
-st.markdown("#### Your AI-Powered MPEP Assistant")
-st.markdown("> _Ask legal or procedural questions. We'll search the MPEP and provide helpful responses._")
+# === MAIN LOGIC ===
+if st.button("🧠 Get AI Answer"):
+    if not user_question:
+        st.warning("Please enter a question.")
+    else:
+        with st.spinner("Processing..."):
+            try:
+                url = chapter_to_url[selected_chapter]
+                raw_text = download_pdf_text(url)
+                top_matches = search_content(user_question, raw_text)
+                context = "\n\n".join(top_matches)
+                llm_answer = summarize_with_llm(user_question, context)
 
-query = st.text_input("🔍 What patent law question do you have?", placeholder="e.g. What causes a patent term adjustment?")
+                st.markdown("### ✅ Answer")
+                st.markdown(f"<div style='background:#f0f9ff;padding:1rem;border-left:4px solid #2196f3;border-radius:6px'>{llm_answer}</div>", unsafe_allow_html=True)
 
-dropdown_labels = [info["title"] for info in MPEP_FILES.values()]
-filename_lookup = {info["title"]: fname for fname, info in MPEP_FILES.items()}
-selected_title = st.selectbox("📂 Choose MPEP Chapter", dropdown_labels)
-selected_file = filename_lookup[selected_title]
-selected_url = MPEP_FILES[selected_file]["url"]
+                st.markdown("### 📚 Source Snippets")
+                for i, para in enumerate(top_matches, 1):
+                    with st.expander(f"Match {i}"):
+                        st.write(para.strip())
 
-if st.button("🧠 Analyze with AI"):
-    with st.spinner("Reading MPEP and generating response..."):
-        try:
-            text = download_pdf_text(selected_url)
-            matches = search_content(query, text)
-            context = "\n\n".join(matches)
-            answer = summarize_with_llm(query, context)
-
-            st.markdown("### ✅ AI-Generated Answer")
-            st.markdown(f"<div style='background:#f4faff;border-left:4px solid #2196f3;padding:1rem;border-radius:8px;'>{answer}</div>", unsafe_allow_html=True)
-
-            st.markdown("### 📚 Relevant MPEP Excerpts")
-            for i, match in enumerate(matches, 1):
-                with st.expander(f"Match {i}"):
-                    st.write(match.strip())
-
-        except Exception as e:
-            st.error(f"⚠️ Failed to retrieve or process PDF: {e}")
+            except Exception as e:
+                st.error(f"❌ Something went wrong: {e}")
