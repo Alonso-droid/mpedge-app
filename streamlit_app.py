@@ -20,21 +20,21 @@ st.markdown(
     unsafe_allow_html=True
 )
 
-# Embedded MPEP chapter info
-chapter_data = [
-    {"Chapter": "2700", "Title": "Patent Terms, Adjustments, and Extensions", "PDF": "https://www.uspto.gov/web/offices/pac/mpep/mpep-2700.pdf"},
-    {"Chapter": "2800", "Title": "Supplemental Examination", "PDF": "https://www.uspto.gov/web/offices/pac/mpep/mpep-2800.pdf"},
-    {"Chapter": "2900", "Title": "International Design Applications", "PDF": "https://www.uspto.gov/web/offices/pac/mpep/mpep-2900.pdf"},
-]
+# Load full chapter data from Excel
+@st.cache_data
+def load_chapter_data():
+    df = pd.read_excel("MPEP overview.xlsx", skiprows=3)
+    df = df.dropna()
+    df = df[df.columns[:3]]
+    df.columns = ["Chapter", "Title", "PDF"]
+    df["Label"] = df["Chapter"].astype(str).str.strip().str.replace("Chpater", "Chapter").str.replace(" ", "", regex=True) + " – " + df["Title"].astype(str).str.strip()
+    return df
 
-chapter_df = pd.DataFrame(chapter_data)
-chapter_to_url = dict(zip(
-    ["Chapter " + row["Chapter"] + " – " + row["Title"] for _, row in chapter_df.iterrows()],
-    chapter_df["PDF"]
-))
+chapter_df = load_chapter_data()
+chapter_to_url = dict(zip(chapter_df["Label"], chapter_df["PDF"]))
 chapter_names = list(chapter_to_url.keys())
 
-# Simple keyword map for auto-detection
+# Keyword map (can be expanded)
 keyword_map = {
     "delay": "2700",
     "adjustment": "2700",
@@ -48,20 +48,17 @@ keyword_map = {
 def detect_chapter_from_question(question):
     question_lower = question.lower()
     for keyword, chapter_code in keyword_map.items():
-        if keyword in question_lower:
-            match = chapter_df[chapter_df["Chapter"] == chapter_code].iloc[0]
-            name = f"Chapter {match['Chapter']} – {match['Title']}"
-            return name
+        match = chapter_df[chapter_df["Chapter"].astype(str) == chapter_code]
+        if keyword in question_lower and not match.empty:
+            return match.iloc[0]["Label"]
     return None
 
-# User inputs
 question = st.text_input("💬 What is your patent law question?")
 selected_chapter = st.selectbox(
     "📂 Choose MPEP Chapter to Search (Optional – AI will pick if left blank)",
     [""] + chapter_names
 )
 
-# Show Submit Button
 if st.button("🔍 Search"):
     if question:
         if not selected_chapter:
@@ -94,7 +91,7 @@ if st.button("🔍 Search"):
                         headers = {"Authorization": f"Bearer {HUGGINGFACE_API_KEY}"}
                         payload = {
                             "inputs": f"Question: {question}\n\nContext:\n{text}",
-                            "parameters": {"max_new_tokens": 300}
+                            "parameters": {"max_new_tokens": 200}
                         }
                         response = requests.post(
                             "https://api-inference.huggingface.co/models/google/flan-t5-base",
