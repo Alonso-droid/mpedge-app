@@ -9,7 +9,7 @@ from thefuzz import fuzz
 st.set_page_config(page_title="📘 MPEdge – AI-Powered MPEP", layout="wide")
 
 # === LOGO ===
-st.image("https://raw.githubusercontent.com/Alonso-droid/mpedge-app/main/MPEEdge%20logo.png", width=100)
+st.image("https://raw.githubusercontent.com/Alonso-droid/mpedge-app/main/MPEEdge%20logo.png", width=80)
 st.title("📘 MPEdge")
 st.markdown("##### AI-powered answers from the MPEP, straight from the USPTO")
 
