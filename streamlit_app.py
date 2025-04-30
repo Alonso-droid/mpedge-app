@@ -4,7 +4,7 @@ import requests
 from PyPDF2 import PdfReader
 import io
 import re
-from fuzzywuzzy import fuzz
+from thefuzz import fuzz
 
 st.set_page_config(page_title="MPEdge - Ask the MPEP", layout="wide")
 
