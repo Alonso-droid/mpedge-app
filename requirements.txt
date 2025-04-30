@@ -4,4 +4,3 @@ PyPDF2
 requests
 fuzzywuzzy
 python-Levenshtein
-google_drive_downloader
