@@ -4,3 +4,4 @@ PyPDF2
 requests
 thefuzz
 python-Levenshtein
+PyMuPDF==1.23.9
