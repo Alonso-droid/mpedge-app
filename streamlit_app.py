@@ -239,7 +239,7 @@ model_name = st.selectbox("Choose a free AI model", list(available_models.keys()
 
 # 📘 Optional MPEP Index Reference
 st.markdown("#### 📘 Need help finding the right chapter?")
-st.markdown("[🔗 View the MPEP Subject Matter Index (PDF)](https://www.uspto.gov/web/offices/pac/mpep/mpep-9090-subject-matter-index.pdf)")
+st.markdown("[🔗 View the MPEP Subject Matter Index (PDF)](https://www.uspto.gov/web/offices/pac/mpep/mpep-index-a.html)")
 
 # Attempt auto-detect if no chapter is manually selected
 suggested = auto_detect_chapters(query)
