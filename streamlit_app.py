@@ -232,7 +232,7 @@ st.markdown("#### 📘 Need help finding the right chapter?")
 st.markdown("[🔗 View the MPEP Subject Matter Index (PDF)](https://www.uspto.gov/web/offices/pac/mpep/mpep-9090-subject-matter-index.pdf)")
 
 # Suggested chapters based on keyword match
-suggested = auto_detect_chapter(query)
+suggested = auto_detect_chapters(query)
 suggested_chapters = [suggested] if suggested else []
 
 # Let user pick chapters manually
