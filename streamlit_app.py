@@ -161,7 +161,11 @@ if st.button("🔍 Search") and query:
 
     # --- Display Answer ---
     st.markdown("## 💡 AI Answer")
-    st.markdown(f\"\"\"\n    <div style='background: #f0f4f8; padding: 1rem; border-left: 4px solid #007acc; border-radius: 6px;'>\n    {llm_response}\n    </div>\n\"\"\", unsafe_allow_html=True)
+    st.markdown(f"""
+    <div style='background: #f0f4f8; padding: 1rem; border-left: 4px solid #007acc; border-radius: 6px;'>
+        {llm_response}
+    </div>
+""", unsafe_allow_html=True)
 
     # --- Show Source Chunks ---
     st.markdown("## 📚 Source Paragraph(s)")
