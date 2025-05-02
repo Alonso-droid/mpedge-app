@@ -99,29 +99,7 @@ chapter_to_url = {
 
 chapter_names = list(chapter_to_url.keys())
 
-# --- Supported Free LLMs with fallback
-available_models = {
-    "Mistral 7B (Hugging Face)": {
-        "id": "huggingface/mistral-7b-instruct",
-        "source": "huggingface"
-    },
-    "DeepSeek Chat (OpenRouter)": {
-        "id": "deepseek-ai/deepseek-llm-7b",
-        "source": "openrouter"
-    },
-    "OpenChat 7B (OpenRouter)": {
-        "id": "openchat/openchat-7b",
-        "source": "openrouter"
-    },
-    "Phi-3 Medium (OpenRouter)": {
-        "id": "microsoft/phi-3-medium-128k-instruct",
-        "source": "openrouter"
-    },
-    "OLMo 2 (OpenRouter)": {
-        "id": "allenai/OLMo-2-0425-1B-Instruct",
-        "source": "openrouter"
-    }
-}
+
 
 # --- Chapter Auto-Suggestion ---
 def auto_detect_chapters(question):
