@@ -250,7 +250,7 @@ available_models = {
 
 def query_llm(prompt, primary_model_name):
     primary = available_models[primary_model_name]
-    fallback = available_models["Mistral 7B (HF)"] if primary_model_name != "Mistral 7B (HF)" else available_models["Phi-3 (OR)"]
+    fallback = available_models["Mistral 7B (Hugging Face)"] if primary_model_name != "Mistral 7B (HF)" else available_models["Phi-3 (OR)"]
 
     def call_model(model):
         source = model["source"]
