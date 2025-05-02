@@ -208,29 +208,34 @@ def get_top_matches(query, chapter_texts, top_k=1):
             results.append((chapter, para, score))
     return sorted(results, key=lambda x: -x[2])
 
-# === Part 5: UI Inputs and Query Options ===
+# === Part 5: UI Inputs and Model Selection ===
 
 st.markdown("### 🔍 Ask a Patent Law Question")
 
+# User input
 query = st.text_input("Enter your question", placeholder="e.g. What is a restriction requirement?")
+
+# Available models (must be defined BEFORE dropdown)
+available_models = {
+    "Mistral 7B (Hugging Face)": {"id": "huggingface/mistral-7b-instruct", "source": "huggingface"},
+    "DeepSeek Chat (OpenRouter)": {"id": "deepseek-ai/deepseek-llm-7b", "source": "openrouter"},
+    "OpenChat 7B (OpenRouter)": {"id": "openchat/openchat-7b", "source": "openrouter"},
+    "Phi-3 Medium (OpenRouter)": {"id": "microsoft/phi-3-medium-128k-instruct", "source": "openrouter"},
+    "OLMo 2 (OpenRouter)": {"id": "allenai/OLMo-2-0425-1B-Instruct", "source": "openrouter"},
+}
+
+# Dropdown for model selection
 model_name = st.selectbox("Choose a free AI model", list(available_models.keys()))
 
-# 📘 Optional MPEP Index Reference
+# Help link for finding chapters
 st.markdown("#### 📘 Need help finding the right chapter?")
-st.markdown("[🔗 View the MPEP Subject Matter Index (PDF)](https://www.uspto.gov/web/offices/pac/mpep/mpep-index-a.html)")
+st.markdown("[🔗 View the MPEP Subject Matter Index (PDF)](https://www.uspto.gov/web/offices/pac/mpep/mpep-9090-subject-matter-index.pdf)")
 
-# Attempt auto-detect if no chapter is manually selected
-suggested = auto_detect_chapters(query)
+# Suggested chapters based on keyword match
+suggested = auto_detect_chapter(query)
 suggested_chapters = [suggested] if suggested else []
 
-
-# Show auto-suggestion before selection
-if suggested_chapters:
-    st.markdown("💡 Suggested Chapters:")
-    for chapter in suggested_chapters:
-        st.markdown(f"- {chapter}")
-
-# Let user manually override chapter selection
+# Let user pick chapters manually
 selected_chapters = st.multiselect(
     "Select up to 3 MPEP chapters to search",
     chapter_names,
@@ -238,19 +243,15 @@ selected_chapters = st.multiselect(
     max_selections=3
 )
 
-# === Part 6: Model Query with Fallback Support ===
-
-available_models = {
-    "Mistral 7B (HF)": {"id": "huggingface/mistral-7b-instruct", "source": "huggingface"},
-    "DeepSeek LLM (OR)": {"id": "deepseek-ai/deepseek-llm-7b", "source": "openrouter"},
-    "OpenChat 7B (OR)": {"id": "openchat/openchat-7b", "source": "openrouter"},
-    "Phi-3 (OR)": {"id": "microsoft/phi-3-medium-128k-instruct", "source": "openrouter"},
-    "OLMo 2 (OR)": {"id": "allenai/OLMo-2-0425-1B-Instruct", "source": "openrouter"},
-}
+# === Part 6: Query LLM with Fallback ===
 
 def query_llm(prompt, primary_model_name):
+    if primary_model_name not in available_models:
+        return {"error": f"Unknown model selected: {primary_model_name}"}
+
     primary = available_models[primary_model_name]
-    fallback = available_models["Mistral 7B (Hugging Face)"] if primary_model_name != "Mistral 7B (HF)" else available_models["Phi-3 (OR)"]
+    fallback_key = "Mistral 7B (Hugging Face)" if primary_model_name != "Mistral 7B (Hugging Face)" else "Phi-3 Medium (OpenRouter)"
+    fallback = available_models[fallback_key]
 
     def call_model(model):
         source = model["source"]
@@ -261,56 +262,46 @@ def query_llm(prompt, primary_model_name):
                 key = os.getenv("HUGGINGFACE_API_KEY")
                 if not key:
                     return {"error": "Missing Hugging Face API key", "model": model_id}
-
                 url = f"https://api-inference.huggingface.co/models/{model_id}"
                 headers = {"Authorization": f"Bearer {key}"}
                 payload = {"inputs": prompt, "parameters": {"max_new_tokens": 300}}
-
-                response = requests.post(url, headers=headers, json=payload)
-                raw = response.text
-
+                r = requests.post(url, headers=headers, json=payload)
+                raw = r.text
                 try:
-                    result = response.json()
-                    if isinstance(result, list) and "generated_text" in result[0]:
-                        return {"output": result[0]["generated_text"], "model": model_id, "source": source}
-                    else:
-                        return {"error": "Unexpected HF format", "raw": result, "model": model_id}
+                    data = r.json()
+                    if isinstance(data, list) and "generated_text" in data[0]:
+                        return {"output": data[0]["generated_text"], "model": model_id}
+                    return {"error": "Unexpected HF output", "raw": data}
                 except Exception as e:
-                    return {"error": f"HF JSON decode failed: {str(e)}", "raw": raw, "model": model_id}
+                    return {"error": f"HF JSON decode error: {e}", "raw": raw}
 
             elif source == "openrouter":
                 key = os.getenv("OPENROUTER_API_KEY")
                 if not key:
                     return {"error": "Missing OpenRouter API key", "model": model_id}
-
                 url = "https://openrouter.ai/api/v1/chat/completions"
                 headers = {"Authorization": f"Bearer {key}"}
                 payload = {"model": model_id, "messages": [{"role": "user", "content": prompt}]}
-
-                response = requests.post(url, headers=headers, json=payload)
-                raw = response.text
-
+                r = requests.post(url, headers=headers, json=payload)
+                raw = r.text
                 try:
-                    result = response.json()
-                    content = result["choices"][0]["message"]["content"]
-                    return {"output": content, "model": model_id, "source": source}
+                    data = r.json()
+                    return {"output": data["choices"][0]["message"]["content"], "model": model_id}
                 except Exception as e:
-                    return {"error": f"OpenRouter JSON decode failed: {str(e)}", "raw": raw, "model": model_id}
+                    return {"error": f"OpenRouter JSON decode error: {e}", "raw": raw}
 
         except Exception as e:
-            return {"error": f"Unhandled request error: {str(e)}", "model": model_id}
+            return {"error": f"Unhandled error calling {model_id}: {e}"}
 
-    # --- Try primary
+    # Try primary model first
     result = call_model(primary)
-
     if "output" in result:
         return result
 
-    # --- Fallback
-    st.warning(f"⚠️ Primary model failed: {result.get('error', 'unknown error')}. Using fallback.")
+    # Fallback if needed
+    st.warning(f"⚠️ Primary model failed: {result.get('error')}. Switching to fallback.")
     fallback_result = call_model(fallback)
-
-    return fallback_result if "output" in fallback_result else {"error": "Both models failed", "raw": fallback_result}
+    return fallback_result if "output" in fallback_result else {"error": "Both models failed", "details": fallback_result}
 
 # === Part 7: AI Execution and Output Display ===
 
