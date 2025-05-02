@@ -269,32 +269,64 @@ def query_llm(prompt, primary_model_name):
     fallback = available_models["Mistral 7B (HF)"] if primary_model_name != "Mistral 7B (HF)" else available_models["Phi-3 (OR)"]
 
     def call_model(model):
-        if model["source"] == "huggingface":
-            key = os.getenv("HUGGINGFACE_API_KEY")
-            if not key: return "[HF key missing]"
-            headers = {"Authorization": f"Bearer {key}"}
-            url = f"https://api-inference.huggingface.co/models/{model['id']}"
-            payload = {"inputs": prompt, "parameters": {"max_new_tokens": 300}}
-            r = requests.post(url, headers=headers, json=payload)
-            try: return r.json()[0]["generated_text"]
-            except: return None
+        source = model["source"]
+        model_id = model["id"]
 
-        elif model["source"] == "openrouter":
-            key = os.getenv("OPENROUTER_API_KEY")
-            if not key: return "[OpenRouter key missing]"
-            headers = {"Authorization": f"Bearer {key}"}
-            url = "https://openrouter.ai/api/v1/chat/completions"
-            payload = {"model": model["id"], "messages": [{"role": "user", "content": prompt}]}
-            r = requests.post(url, headers=headers, json=payload)
-            try: return r.json()["choices"][0]["message"]["content"]
-            except: return None
+        try:
+            if source == "huggingface":
+                key = os.getenv("HUGGINGFACE_API_KEY")
+                if not key:
+                    return {"error": "Missing Hugging Face API key", "model": model_id}
 
+                url = f"https://api-inference.huggingface.co/models/{model_id}"
+                headers = {"Authorization": f"Bearer {key}"}
+                payload = {"inputs": prompt, "parameters": {"max_new_tokens": 300}}
+
+                response = requests.post(url, headers=headers, json=payload)
+                raw = response.text
+
+                try:
+                    result = response.json()
+                    if isinstance(result, list) and "generated_text" in result[0]:
+                        return {"output": result[0]["generated_text"], "model": model_id, "source": source}
+                    else:
+                        return {"error": "Unexpected HF format", "raw": result, "model": model_id}
+                except Exception as e:
+                    return {"error": f"HF JSON decode failed: {str(e)}", "raw": raw, "model": model_id}
+
+            elif source == "openrouter":
+                key = os.getenv("OPENROUTER_API_KEY")
+                if not key:
+                    return {"error": "Missing OpenRouter API key", "model": model_id}
+
+                url = "https://openrouter.ai/api/v1/chat/completions"
+                headers = {"Authorization": f"Bearer {key}"}
+                payload = {"model": model_id, "messages": [{"role": "user", "content": prompt}]}
+
+                response = requests.post(url, headers=headers, json=payload)
+                raw = response.text
+
+                try:
+                    result = response.json()
+                    content = result["choices"][0]["message"]["content"]
+                    return {"output": content, "model": model_id, "source": source}
+                except Exception as e:
+                    return {"error": f"OpenRouter JSON decode failed: {str(e)}", "raw": raw, "model": model_id}
+
+        except Exception as e:
+            return {"error": f"Unhandled request error: {str(e)}", "model": model_id}
+
+    # --- Try primary
     result = call_model(primary)
-    if result is None or "[Error" in str(result):
-        st.warning(f"⚠️ {primary_model_name} failed. Switching to fallback model...")
-        result = call_model(fallback)
 
-    return result or "[No response from any model]"
+    if "output" in result:
+        return result
+
+    # --- Fallback
+    st.warning(f"⚠️ Primary model failed: {result.get('error', 'unknown error')}. Using fallback.")
+    fallback_result = call_model(fallback)
+
+    return fallback_result if "output" in fallback_result else {"error": "Both models failed", "raw": fallback_result}
 
 # === Part 7: AI Execution and Output Display ===
 
@@ -310,7 +342,42 @@ if st.button("🔍 Search") and query and selected_chapters:
         context = "\n---\n".join(f"{chap}\n{para}" for chap, para, _ in top_matches)
         prompt = f"Question: {query}\n\nContext:\n{context}\n\nAnswer clearly and cite MPEP sections where applicable."
 
-        llm_response = query_llm(prompt, model_name)
+        # --- Call LLM with fallback + structured debug info ---
+        llm_result = query_llm(prompt, model_name)
+
+        # --- Debug Log: Always show raw structure for dev
+        st.markdown("### 🐞 Debug Output (developer view)")
+        st.json(llm_result)
+        
+        # --- Error Handling or Extract Response ---
+        if "output" not in llm_result:
+            st.error(f"❌ No usable LLM response.\n\n**Error**: {llm_result.get('error', 'Unknown error')}")
+            if "raw" in llm_result:
+                st.code(str(llm_result["raw"])[:1500], language="json")
+            st.stop()
+        
+        llm_response = llm_result["output"]  # Safe extract
+        
+        # --- Save state
+        st.session_state["last_query"] = query
+        st.session_state["last_answer"] = llm_response
+        st.session_state["history"].append({
+            "query": query,
+            "answer": llm_response,
+            "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M")
+        })
+
+        # --- Highlight citations ---
+        llm_response = re.sub(r"(MPEP[\s-]*\d+|§[\s]*\d+(\.\d+)*)", r"**\1**", llm_response)
+        
+        # --- Render AI Answer ---
+        st.markdown("## 💡 AI Answer")
+        st.markdown(f"""
+        <div style='background: #eef6ff; padding: 1rem; border-left: 4px solid #007acc; border-radius: 6px;'>
+            {llm_response}
+        </div>
+        """, unsafe_allow_html=True)
+
 
         if not llm_response:
             st.error("❌ AI model failed to respond. Try a different model or retry.")
