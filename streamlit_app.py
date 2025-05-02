@@ -102,7 +102,7 @@ chapter_names = list(chapter_to_url.keys())
 
 
 # --- Chapter Auto-Suggestion ---
-def auto_detect_chapter(question):
+def auto_detect_chapters(question):
     keyword_to_chapter = {
         # --- Patentability & Rejections ---
         "101": "Chapter 2100 – Patentability",
