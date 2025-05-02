@@ -246,7 +246,7 @@ model_name = st.selectbox("Choose a free AI model", list(available_models.keys()
 
 # Help link for chapter selection
 st.markdown("#### 📘 Need help finding the right chapter?")
-st.markdown("[🔗 View the MPEP Subject Matter Index (PDF)](https://www.uspto.gov/web/offices/pac/mpep/mpep-9090-subject-matter-index.pdf)")
+st.markdown("[🔗 View the MPEP Subject Matter Index](https://www.uspto.gov/web/offices/pac/mpep/mpep-9090-subject-matter-index.pdf)")
 
 # Suggest chapters from question
 suggested = auto_detect_chapters(query)
