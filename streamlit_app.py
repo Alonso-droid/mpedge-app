@@ -66,25 +66,48 @@ chapter_to_url = {
 
 chapter_names = list(chapter_to_url.keys())
 
+# --- Supported Free LLMs with fallback
+available_models = {
+    "Mistral 7B (Hugging Face)": {
+        "id": "huggingface/mistral-7b-instruct",
+        "source": "huggingface"
+    },
+    "DeepSeek Chat (OpenRouter)": {
+        "id": "deepseek-ai/deepseek-llm-7b",
+        "source": "openrouter"
+    },
+    "OpenChat 7B (OpenRouter)": {
+        "id": "openchat/openchat-7b",
+        "source": "openrouter"
+    },
+    "Phi-3 Medium (OpenRouter)": {
+        "id": "microsoft/phi-3-medium-128k-instruct",
+        "source": "openrouter"
+    },
+    "OLMo 2 (OpenRouter)": {
+        "id": "allenai/OLMo-2-0425-1B-Instruct",
+        "source": "openrouter"
+    }
+}
 
-# --- Chapter Auto-Suggestion (simple keyword map) ---
+# --- Chapter Auto-Suggestion ---
 def auto_detect_chapter(question):
     keywords = {
         "restriction": "Chapter 800 – Restriction in Applications Filed Under 35 U.S.C. 111; Double Patenting",
         "obviousness": "Chapter 2100 – Patentability",
         "appeal": "Chapter 1200 – Appeal",
-        "drawings": "Chapter 600 – Parts, Form, and Content of Application",
-        "allowance": "Chapter 1300 – Allowance and Issue",
+        "drawing": "Chapter 600 – Parts, Form, and Content of Application",
         "prior art": "Chapter 2200 – Citation of Prior Art and Ex Parte Reexamination of Patents",
-        "design": "Chapter 1500 – Design Patents"
+        "design": "Chapter 1500 – Design Patents",
+        "examination": "Chapter 700 – Examination of Applications"
     }
-    for word, chapter in keywords.items():
-        if word.lower() in question.lower():
-            return chapter
+    for key, chap in keywords.items():
+        if key.lower() in question.lower():
+            return chap
     return None
 
-# --- Load PDF Text ---
-@st.cache_data(show_spinner="📥 Downloading and extracting chapters...")
+# --- PDF Loader with Caching ---
+@st.cache_data(show_spinner="📄 Reading selected MPEP chapters...")
 def get_text_from_pdf_url(url):
     try:
         response = requests.get(url)
@@ -93,92 +116,88 @@ def get_text_from_pdf_url(url):
             doc = fitz.open(stream=f.read(), filetype="pdf")
             return "\n".join(page.get_text() for page in doc)
     except Exception as e:
-        return f"[Error extracting PDF]: {e}"
+        return f"[PDF Error] {e}"
 
-# --- Embedding-based Match ---
+# --- Embedding Search ---
 def get_top_matches(query, chapter_texts, top_k=1):
     results = []
     for chapter, full_text in chapter_texts.items():
         paragraphs = [p for p in full_text.split("\n\n") if len(p.strip()) > 100]
+        if not paragraphs:
+            continue
         para_embeddings = model.encode(paragraphs, convert_to_tensor=True)
         query_embedding = model.encode(query, convert_to_tensor=True)
         hits = util.semantic_search(query_embedding, para_embeddings, top_k=top_k)[0]
         for hit in hits:
-            para = paragraphs[hit['corpus_id']]
-            results.append((chapter, para, hit['score']))
+            para = paragraphs[hit["corpus_id"]]
+            score = hit["score"]
+            results.append((chapter, para.strip(), score))
     return sorted(results, key=lambda x: -x[2])
 
-# --- LLM Call via API ---
-def query_llm(prompt, model_source):
-    if model_source == "huggingface":
-        api_key = os.getenv("HUGGINGFACE_API_KEY")
-        if not api_key:
-            return "[Error: Hugging Face key not set]"
-        headers = {"Authorization": f"Bearer {api_key}"}
-        url = "https://api-inference.huggingface.co/models/mistralai/Mistral-7B-Instruct-v0.1"
-        payload = {"inputs": prompt, "parameters": {"max_new_tokens": 300}}
-        response = requests.post(url, headers=headers, json=payload)
-        try:
-            return response.json()[0]["generated_text"]
-        except Exception as e:
-            return f"[Hugging Face Error] {response.text}"
-    
-    else:  # openrouter
-        api_key = os.getenv("OPENROUTER_API_KEY")
-        if not api_key:
-            return "[Error: OpenRouter key not set]"
-        headers = {"Authorization": f"Bearer {api_key}"}
-        url = "https://openrouter.ai/api/v1/chat/completions"
-        messages = [{"role": "user", "content": prompt}]
-        payload = {"model": "openai/gpt-3.5-turbo", "messages": messages}
-        response = requests.post(url, json=payload, headers=headers)
-       
-        # 🔍 DEBUG LOGGING
-        st.text(response.text)  # DEBUG: show raw API response in UI
-
-        try:
-            data = response.json()
-            return data["choices"][0]["message"]["content"]
-        except Exception as e:
-            return f"[OpenRouter Error] {response.text}"
-
-# --- UI: User Inputs ---
-st.markdown("### 🔎 Ask a Question")
+# --- UI Inputs ---
+st.markdown("### 🔍 Ask Your Question")
 query = st.text_input("Enter a patent law question", placeholder="e.g. What is a restriction requirement?")
 selected_chapters = st.multiselect("Select up to 3 chapters to search", chapter_names, max_selections=3)
-model_source = st.radio("Choose model to analyze", ["huggingface", "openrouter"], index=0, horizontal=True)
-# --- Main Search Logic ---
+model_choice = st.selectbox("Choose a free model to answer with", list(available_models.keys()))
+
+# --- Unified LLM Query with Fallback ---
+def query_llm(prompt, primary_model_name):
+    primary = available_models[primary_model_name]
+    backup = available_models["Mistral 7B (Hugging Face)"] if primary_model_name != "Mistral 7B (Hugging Face)" else available_models["Phi-3 Medium (OpenRouter)"]
+
+    def call_model(model_info):
+        if model_info["source"] == "huggingface":
+            key = os.getenv("HUGGINGFACE_API_KEY")
+            if not key:
+                return "[Hugging Face API key not set]"
+            headers = {"Authorization": f"Bearer {key}"}
+            url = f"https://api-inference.huggingface.co/models/{model_info['id']}"
+            payload = {"inputs": prompt, "parameters": {"max_new_tokens": 300}}
+            response = requests.post(url, headers=headers, json=payload)
+            try:
+                return response.json()[0]["generated_text"]
+            except Exception:
+                return None
+
+        elif model_info["source"] == "openrouter":
+            key = os
+
+# --- Final Execution ---
 if st.button("🔍 Search") and query:
-    # If user didn’t select chapters, try to auto-suggest one
+    # Auto-detect if nothing selected
     if not selected_chapters:
-        detected = auto_detect_chapter(query)
-        if detected:
-            selected_chapters = [detected]
-            st.info(f"📘 Auto-selected likely chapter: **{detected}**")
+        auto = auto_detect_chapter(query)
+        if auto:
+            selected_chapters = [auto]
+            st.info(f"📘 Auto-selected likely chapter: **{auto}**")
         else:
-            st.warning("⚠️ Please select at least one chapter or improve your question.")
+            st.warning("⚠️ Please select at least one chapter or clarify your question.")
             st.stop()
 
-    with st.spinner("🔎 Searching chapters and generating response..."):
-        chapter_texts = {chap: get_text_from_pdf_url(chapter_to_url[chap]) for chap in selected_chapters}
+    # Extract text from PDFs
+    with st.spinner("📄 Reading and analyzing selected chapters..."):
+        chapter_texts = {c: get_text_from_pdf_url(chapter_to_url[c]) for c in selected_chapters}
         top_matches = get_top_matches(query, chapter_texts, top_k=1)
 
-        # Construct prompt for LLM
+        if not top_matches:
+            st.error("❌ No relevant content found.")
+            st.stop()
+
         context = "\n---\n".join(f"{chap}\n{para}" for chap, para, _ in top_matches)
-        final_prompt = f"Question: {query}\n\nContext:\n{context}\n\nAnswer clearly, with citations from the MPEP."
+        prompt = f"Question: {query}\n\nContext:\n{context}\n\nAnswer clearly and cite specific MPEP sections if appropriate."
 
-        llm_response = query_llm(final_prompt, model_source)
+        llm_response = query_llm(prompt, model_choice)
 
-    # --- Display Answer ---
+    # --- Show Answer ---
     st.markdown("## 💡 AI Answer")
     st.markdown(f"""
     <div style='background: #f0f4f8; padding: 1rem; border-left: 4px solid #007acc; border-radius: 6px;'>
         {llm_response}
     </div>
-""", unsafe_allow_html=True)
+    """, unsafe_allow_html=True)
 
-    # --- Show Source Chunks ---
+    # --- Show Source ---
     st.markdown("## 📚 Source Paragraph(s)")
     for chap, para, score in top_matches:
-        with st.expander(f"{chap}  —  Relevance Score: {score:.2f}", expanded=False):
-            st.code(para.strip()[:1500])  # Show partial match for readability
+        with st.expander(f"{chap} — Relevance Score: {score:.2f}", expanded=False):
+            st.code(para[:1500])  # limit for UX
