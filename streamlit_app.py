@@ -12,7 +12,7 @@ import json
 import base64
 from datetime import datetime
 from thefuzz import fuzz
-from sentence_transformers import SentenceTransformer, util
+from sentence_transformers import SentenceTransformer
 import torch
 
 # --- Load Embedder Model ---
@@ -173,7 +173,6 @@ def auto_detect_chapters(question):
         "petition": "Chapter 1000 – Matters Decided by Various U.S. Patent and Trademark Office Officials"
 
          # --- Patentability (Chapter 2100) ---
-        "utility": "Chapter 2100 – Patentability",
         "section 101": "Chapter 2100 – Patentability",
         "section 102": "Chapter 2100 – Patentability",
         "section 103": "Chapter 2100 – Patentability",
