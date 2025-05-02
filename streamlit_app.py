@@ -132,15 +132,15 @@ def query_llm(prompt, model_source):
         messages = [{"role": "user", "content": prompt}]
         payload = {"model": "openai/gpt-3.5-turbo", "messages": messages}
         response = requests.post(url, json=payload, headers=headers)
-        
+       
+        # 🔍 DEBUG LOGGING
+        st.text(response.text)  # DEBUG: show raw API response in UI
+
         try:
             data = response.json()
             return data["choices"][0]["message"]["content"]
         except Exception as e:
             return f"[OpenRouter Error] {response.text}"
-# Debug log
-st.text(response.text)  # Optional: for debugging LLM failures
-
 
 # --- UI: User Inputs ---
 st.markdown("### 🔎 Ask a Question")
