@@ -32,6 +32,26 @@ if "last_query" not in st.session_state:
 if "last_answer" not in st.session_state:
     st.session_state["last_answer"] = None
 
+# === Part 2: Logo, Page Setup, and UI Theme ===
+
+# --- Page Configuration ---
+st.set_page_config(page_title="MPEdge", layout="wide")
+
+# --- Header with Logo ---
+def render_logo_and_header():
+    logo_url = "https://github.com/Alonso-droid/mpedge-app/raw/main/MPEdge%20logo.png"
+    st.markdown(f"""
+        <div style="display: flex; align-items: center; gap: 20px; margin-bottom: 1rem;">
+            <img src="{logo_url}" alt="MPEdge Logo" width="60"/>
+            <h1 style="margin: 0;">MPEdge: AI Patent Assistant</h1>
+        </div>
+    """, unsafe_allow_html=True)
+
+render_logo_and_header()
+
+# --- Intro Text ---
+st.markdown("AI-powered search and analysis of the MPEP (Manual of Patent Examining Procedure). Ask a question, and receive an answer with citations from USPTO source material.")
+
 
 # --- Hardcoded MPEP Chapters (Official USPTO PDFs) ---
 chapter_to_url = {
