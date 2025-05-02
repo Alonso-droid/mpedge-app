@@ -4,3 +4,4 @@ requests
 thefuzz
 python-Levenshtein
 PyMuPDF==1.23.9
+huggingface_hub
