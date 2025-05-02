@@ -12,7 +12,7 @@ import torch
 # --- Page Config ---
 st.set_page_config(page_title="MPEdge", layout="wide")
 st.title("📘 MPEdge — Ask the MPEP")
-st.markdown("AI-powered patent assistant. Search the MPEP and get summarized answers with citations.")
+st.markdown("Free AI-powered MPEP search. Select a free model, ask your question, and get an answer with citations.")
 
 # --- Load Embedder ---
 @st.cache_resource(show_spinner=False)
