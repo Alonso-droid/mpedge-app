@@ -116,21 +116,31 @@ def query_llm(prompt, model_source):
             return "[Error: Hugging Face key not set]"
         headers = {"Authorization": f"Bearer {api_key}"}
         url = "https://api-inference.huggingface.co/models/mistralai/Mistral-7B-Instruct-v0.1"
-    else:
+        payload = {"inputs": prompt, "parameters": {"max_new_tokens": 300}}
+        response = requests.post(url, headers=headers, json=payload)
+        try:
+            return response.json()[0]["generated_text"]
+        except Exception as e:
+            return f"[Hugging Face Error] {response.text}"
+    
+    else:  # openrouter
         api_key = os.getenv("OPENROUTER_API_KEY")
         if not api_key:
             return "[Error: OpenRouter key not set]"
         headers = {"Authorization": f"Bearer {api_key}"}
         url = "https://openrouter.ai/api/v1/chat/completions"
-        prompt = [{"role": "user", "content": prompt}]
-        return requests.post(url, json={"model": "openai/gpt-3.5-turbo", "messages": prompt}, headers=headers).json()["choices"][0]["message"]["content"]
+        messages = [{"role": "user", "content": prompt}]
+        payload = {"model": "openai/gpt-3.5-turbo", "messages": messages}
+        response = requests.post(url, json=payload, headers=headers)
+        
+        try:
+            data = response.json()
+            return data["choices"][0]["message"]["content"]
+        except Exception as e:
+            return f"[OpenRouter Error] {response.text}"
+# Debug log
+st.text(response.text)  # Optional: for debugging LLM failures
 
-    payload = {"inputs": prompt, "parameters": {"max_new_tokens": 300}}
-    response = requests.post(url, headers=headers, json=payload)
-    try:
-        return response.json()[0]["generated_text"]
-    except:
-        return f"[LLM Error]: {response.text}"
 
 # --- UI: User Inputs ---
 st.markdown("### 🔎 Ask a Question")
