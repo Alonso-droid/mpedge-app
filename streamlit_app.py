@@ -238,7 +238,9 @@ query = st.text_input("Enter your question", placeholder="e.g. What is a restric
 model_name = st.selectbox("Choose a free AI model", list(available_models.keys()))
 
 # Attempt auto-detect if no chapter is manually selected
-suggested_chapters = auto_detect_chapters(query) if query else []
+suggested = auto_detect_chapters(query)
+suggested_chapters = [suggested] if suggested else []
+
 
 # Show auto-suggestion before selection
 if suggested_chapters:
