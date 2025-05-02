@@ -1,24 +1,37 @@
 # streamlit_app.py
 
+# === Part 1: Setup and Imports ===
+
 import streamlit as st
 import requests
 import fitz  # PyMuPDF
 from io import BytesIO
-from thefuzz import fuzz
 import os
+import re
+import json
+import base64
+from datetime import datetime
+from thefuzz import fuzz
 from sentence_transformers import SentenceTransformer, util
 import torch
 
-# --- Page Config ---
-st.set_page_config(page_title="MPEdge", layout="wide")
-st.title("📘 MPEdge — Ask the MPEP")
-st.markdown("Free AI-powered MPEP search. Select a free model, ask your question, and get an answer with citations.")
-
-# --- Load Embedder ---
-@st.cache_resource(show_spinner=False)
+# --- Load Embedder Model ---
+@st.cache_resource(show_spinner="🔌 Loading embedding model...")
 def load_embedder():
     return SentenceTransformer("all-MiniLM-L6-v2")
+
 model = load_embedder()
+
+# --- Initialize Session State ---
+if "history" not in st.session_state:
+    st.session_state["history"] = []
+
+if "last_query" not in st.session_state:
+    st.session_state["last_query"] = None
+
+if "last_answer" not in st.session_state:
+    st.session_state["last_answer"] = None
+
 
 # --- Hardcoded MPEP Chapters (Official USPTO PDFs) ---
 chapter_to_url = {
