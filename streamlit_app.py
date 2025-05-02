@@ -115,7 +115,6 @@ def auto_detect_chapters(question):
         "35 usc 103": "Chapter 2100 – Patentability",
         "35 usc 102": "Chapter 2100 – Patentability",
         "patentable subject matter": "Chapter 2100 – Patentability",
-        "section 101": "Chapter 2100 – Patentability",
         "double patenting": "Chapter 800 – Restriction in Applications Filed Under 35 U.S.C. 111; Double Patenting",
         "unity of invention": "Chapter 800 – Restriction in Applications Filed Under 35 U.S.C. 111; Double Patenting",
         "restriction": "Chapter 800 – Restriction in Applications Filed Under 35 U.S.C. 111; Double Patenting",
