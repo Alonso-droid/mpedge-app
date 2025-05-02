@@ -113,7 +113,6 @@ def auto_detect_chapters(question):
         # Patentability & Examination
         "obviousness": "Chapter 2100 – Patentability",
         "35 usc 103": "Chapter 2100 – Patentability",
-        "novelty": "Chapter 2100 – Patentability",
         "35 usc 102": "Chapter 2100 – Patentability",
         "patentable subject matter": "Chapter 2100 – Patentability",
         "section 101": "Chapter 2100 – Patentability",
@@ -174,7 +173,6 @@ def auto_detect_chapters(question):
         "petition": "Chapter 1000 – Matters Decided by Various U.S. Patent and Trademark Office Officials"
 
          # --- Patentability (Chapter 2100) ---
-         "non-obvious": "Chapter 2100 – Patentability",
         "novelty": "Chapter 2100 – Patentability",
         "enablement": "Chapter 2100 – Patentability",
         "written description": "Chapter 2100 – Patentability",
