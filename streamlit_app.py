@@ -328,10 +328,11 @@ def query_llm(prompt, primary_model_name):
     return result_fallback if "output" in result_fallback else {"error": "Both models failed", "details": result_fallback}
 
 
-# === Part 7: AI Execution and Output Display ===
+# === Part 7: Execute Search, Query Model, and Display Answer ===
 
 if st.button("🔍 Search") and query and selected_chapters:
     with st.spinner("🔍 Retrieving relevant text and analyzing..."):
+        # Load and extract relevant text
         chapter_texts = {c: get_text_from_pdf_url(chapter_to_url[c]) for c in selected_chapters}
         top_matches = get_top_matches(query, chapter_texts, top_k=1)
 
@@ -339,51 +340,44 @@ if st.button("🔍 Search") and query and selected_chapters:
             st.error("❌ No relevant text found in selected chapters.")
             st.stop()
 
+        # Build context from top paragraphs
         context = "\n---\n".join(f"{chap}\n{para}" for chap, para, _ in top_matches)
-        prompt = f"Question: {query}\n\nContext:\n{context}\n\nAnswer clearly and cite MPEP sections where applicable."
 
-        # --- Call LLM with fallback + structured debug info ---
-        llm_result = query_llm(prompt, model_name)
+        # Clean, structured prompt
+        prompt = f"""
+Using the following text from the MPEP chapter(s), answer the user's question concisely and clearly. Do not repeat the question or the full context.
 
-        # --- Debug Log: Always show raw structure for dev
+User question:
+{query}
+
+MPEP context:
+{context}
+
+Answer:
+""".strip()
+
+        # Call LLM
+        result = query_llm(prompt, model_name)
+
+        # --- Debug Output ---
         st.markdown("### 🐞 Debug Output (developer view)")
-        st.json(llm_result)
-        
-        # --- Error Handling or Extract Response ---
-        if "output" not in llm_result:
-            st.error(f"❌ No usable LLM response.\n\n**Error**: {llm_result.get('error', 'Unknown error')}")
-            if "raw" in llm_result:
-                st.code(str(llm_result["raw"])[:1500], language="json")
-            st.stop()
-        
-        llm_response = llm_result["output"]  # Safe extract
-        
-        # --- Save state
-        st.session_state["last_query"] = query
-        st.session_state["last_answer"] = llm_response
-        st.session_state["history"].append({
-            "query": query,
-            "answer": llm_response,
-            "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M")
-        })
+        st.json(result)
 
-        # --- Highlight citations ---
+        if "output" not in result:
+            st.error(f"❌ No usable LLM response.\n\nError: {result.get('error', 'Unknown error')}")
+            if "raw" in result:
+                st.code(str(result["raw"])[:1500], language="json")
+            st.stop()
+
+        # Strip prompt echo
+        raw_output = result["output"]
+        answer_start = "Answer:"
+        llm_response = raw_output.split(answer_start, 1)[-1].strip() if answer_start in raw_output else raw_output.strip()
+
+        # Highlight MPEP citations
         llm_response = re.sub(r"(MPEP[\s-]*\d+|§[\s]*\d+(\.\d+)*)", r"**\1**", llm_response)
-        
-        # --- Render AI Answer ---
-        st.markdown("## 💡 AI Answer")
-        st.markdown(f"""
-        <div style='background: #eef6ff; padding: 1rem; border-left: 4px solid #007acc; border-radius: 6px;'>
-            {llm_response}
-        </div>
-        """, unsafe_allow_html=True)
 
-
-        if not llm_response:
-            st.error("❌ AI model failed to respond. Try a different model or retry.")
-            st.stop()
-
-        # Save in session state
+        # Save state
         st.session_state["last_query"] = query
         st.session_state["last_answer"] = llm_response
         st.session_state["history"].append({
@@ -392,20 +386,20 @@ if st.button("🔍 Search") and query and selected_chapters:
             "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M")
         })
 
-    # --- Display Answer ---
+    # --- Display Final Answer ---
     st.markdown("## 💡 AI Answer")
-    llm_response = re.sub(r"(MPEP[\s-]*\d+|§[\s]*\d+(\.\d+)*)", r"**\1**", llm_response)  # highlight citations
     st.markdown(f"""
     <div style='background: #eef6ff; padding: 1rem; border-left: 4px solid #007acc; border-radius: 6px;'>
         {llm_response}
     </div>
     """, unsafe_allow_html=True)
 
-    # --- Display Source Evidence ---
+    # --- Source Evidence ---
     st.markdown("## 📚 Source Paragraph(s)")
     for chap, para, score in top_matches:
         with st.expander(f"{chap} — Match Score: {score:.2f}", expanded=False):
             st.code(para.strip()[:1500])
+
 
 # === Part 8: Rating + History Tracker ===
 
