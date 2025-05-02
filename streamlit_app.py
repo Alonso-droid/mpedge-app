@@ -9,31 +9,18 @@ import os
 from sentence_transformers import SentenceTransformer, util
 import torch
 
-# --- App Config ---
+# --- Page Config ---
 st.set_page_config(page_title="MPEdge", layout="wide")
 st.title("📘 MPEdge — Ask the MPEP")
-st.markdown("""
-A simple patent assistant powered by open-source models and the USPTO's MPEP.
-""")
+st.markdown("AI-powered patent assistant. Search the MPEP and get summarized answers with citations.")
 
-# --- Load Embedder Model ---
+# --- Load Embedder ---
 @st.cache_resource(show_spinner=False)
 def load_embedder():
     return SentenceTransformer("all-MiniLM-L6-v2")
-
 model = load_embedder()
 
-def get_text_from_pdf_url(url):
-    try:
-        response = requests.get(url)
-        response.raise_for_status()
-        with BytesIO(response.content) as f:
-            doc = fitz.open(stream=f.read(), filetype="pdf")
-            return "\n".join(page.get_text() for page in doc)
-    except Exception as e:
-        return f"[Error extracting PDF]: {e}"
-
-# --- MPEP Chapters ---
+# --- Hardcoded MPEP Chapters (Official USPTO PDFs) ---
 chapter_to_url = {
     'Chapter 0 – Table of Contents': 'https://www.uspto.gov/web/offices/pac/mpep/mpep-0000-table-of-contents.pdf',
     'Chapter 20 – Introduction': 'https://www.uspto.gov/web/offices/pac/mpep/mpep-0020-introduction.pdf',
@@ -78,71 +65,104 @@ chapter_to_url = {
 }
 chapter_names = list(chapter_to_url.keys())
 
-# --- UI: Question & Selection ---
-st.markdown("### 🔍 Ask a Question")
-query = st.text_input("Enter your patent law question", placeholder="e.g. What is a restriction requirement?")
-selected_chapters = st.multiselect("Select up to 3 chapters to search", chapter_names, max_selections=3)
+# --- Chapter Auto-Suggestion (simple keyword map) ---
+def auto_detect_chapter(question):
+    keywords = {
+        "restriction": "Chapter 800 – Restriction in Applications Filed Under 35 U.S.C. 111; Double Patenting",
+        "obviousness": "Chapter 2100 – Patentability",
+        "appeal": "Chapter 1200 – Appeal",
+        "drawings": "Chapter 600 – Parts, Form, and Content of Application",
+        "allowance": "Chapter 1300 – Allowance and Issue",
+        "prior art": "Chapter 2200 – Citation of Prior Art and Ex Parte Reexamination of Patents",
+        "design": "Chapter 1500 – Design Patents"
+    }
+    for word, chapter in keywords.items():
+        if word.lower() in question.lower():
+            return chapter
+    return None
 
-@st.cache_data(show_spinner="📥 Downloading and processing PDFs...")
-def load_texts(chapter_keys):
-    texts = {}
-    for key in chapter_keys:
-        raw = get_text_from_pdf_url(chapter_to_url[key])
-        texts[key] = raw
-    return texts
+# --- Load PDF Text ---
+@st.cache_data(show_spinner="📥 Downloading and extracting chapters...")
+def get_text_from_pdf_url(url):
+    try:
+        response = requests.get(url)
+        response.raise_for_status()
+        with BytesIO(response.content) as f:
+            doc = fitz.open(stream=f.read(), filetype="pdf")
+            return "\n".join(page.get_text() for page in doc)
+    except Exception as e:
+        return f"[Error extracting PDF]: {e}"
 
-# --- Helper: Retrieve Top Chunks ---
-def get_top_matches(query, text_map, top_k=1):
+# --- Embedding-based Match ---
+def get_top_matches(query, chapter_texts, top_k=1):
     results = []
-    for chapter, text in text_map.items():
-        paragraphs = [p for p in text.split("\n\n") if len(p.strip()) > 100]
+    for chapter, full_text in chapter_texts.items():
+        paragraphs = [p for p in full_text.split("\n\n") if len(p.strip()) > 100]
         para_embeddings = model.encode(paragraphs, convert_to_tensor=True)
         query_embedding = model.encode(query, convert_to_tensor=True)
         hits = util.semantic_search(query_embedding, para_embeddings, top_k=top_k)[0]
         for hit in hits:
             para = paragraphs[hit['corpus_id']]
-            score = hit['score']
-            results.append((chapter, para, score))
+            results.append((chapter, para, hit['score']))
     return sorted(results, key=lambda x: -x[2])
 
-# --- Hugging Face API ---
-def query_huggingface(prompt):
-    key = os.getenv("HUGGINGFACE_API_KEY")
-    if not key:
-        st.error("Hugging Face API key not set in Streamlit secrets.")
-        return ""
-    headers = {"Authorization": f"Bearer {key}"}
-    payload = {
-        "inputs": prompt,
-        "parameters": {"max_new_tokens": 300}
-    }
-    response = requests.post(
-        "https://api-inference.huggingface.co/models/mistralai/Mistral-7B-Instruct-v0.1",
-        headers=headers, json=payload)
-    try:
-        return response.json()[0]['generated_text']
-    except:
-        return f"[Error from Hugging Face]: {response.text}"
+# --- LLM Call via API ---
+def query_llm(prompt, model_source):
+    if model_source == "huggingface":
+        api_key = os.getenv("HUGGINGFACE_API_KEY")
+        if not api_key:
+            return "[Error: Hugging Face key not set]"
+        headers = {"Authorization": f"Bearer {api_key}"}
+        url = "https://api-inference.huggingface.co/models/mistralai/Mistral-7B-Instruct-v0.1"
+    else:
+        api_key = os.getenv("OPENROUTER_API_KEY")
+        if not api_key:
+            return "[Error: OpenRouter key not set]"
+        headers = {"Authorization": f"Bearer {api_key}"}
+        url = "https://openrouter.ai/api/v1/chat/completions"
+        prompt = [{"role": "user", "content": prompt}]
+        return requests.post(url, json={"model": "openai/gpt-3.5-turbo", "messages": prompt}, headers=headers).json()["choices"][0]["message"]["content"]
 
-# --- Main Search + Output ---
-if st.button("🔍 Search") and query and selected_chapters:
-    with st.spinner("🔎 Analyzing MPEP chapters..."):
-        chapter_texts = load_texts(selected_chapters)
+    payload = {"inputs": prompt, "parameters": {"max_new_tokens": 300}}
+    response = requests.post(url, headers=headers, json=payload)
+    try:
+        return response.json()[0]["generated_text"]
+    except:
+        return f"[LLM Error]: {response.text}"
+
+# --- UI: User Inputs ---
+st.markdown("### 🔎 Ask a Question")
+query = st.text_input("Enter a patent law question", placeholder="e.g. What is a restriction requirement?")
+selected_chapters = st.multiselect("Select up to 3 chapters to search", chapter_names, max_selections=3)
+model_source = st.radio("Choose model to analyze", ["huggingface", "openrouter"], index=0, horizontal=True)
+# --- Main Search Logic ---
+if st.button("🔍 Search") and query:
+    # If user didn’t select chapters, try to auto-suggest one
+    if not selected_chapters:
+        detected = auto_detect_chapter(query)
+        if detected:
+            selected_chapters = [detected]
+            st.info(f"📘 Auto-selected likely chapter: **{detected}**")
+        else:
+            st.warning("⚠️ Please select at least one chapter or improve your question.")
+            st.stop()
+
+    with st.spinner("🔎 Searching chapters and generating response..."):
+        chapter_texts = {chap: get_text_from_pdf_url(chapter_to_url[chap]) for chap in selected_chapters}
         top_matches = get_top_matches(query, chapter_texts, top_k=1)
 
+        # Construct prompt for LLM
         context = "\n---\n".join(f"{chap}\n{para}" for chap, para, _ in top_matches)
-        prompt = f"Question: {query}\n\nContext:\n{context}\n\nAnswer clearly with MPEP citations."
+        final_prompt = f"Question: {query}\n\nContext:\n{context}\n\nAnswer clearly, with citations from the MPEP."
 
-        llm_output = query_huggingface(prompt)
+        llm_response = query_llm(final_prompt, model_source)
 
-        st.markdown("## 💡 AI-Generated Answer")
-        st.markdown(f"""
-        <div style='background: #f0f4f8; padding: 1rem; border-left: 4px solid #007acc; border-radius: 6px;'>
-        {llm_output}
-        </div>
-        """, unsafe_allow_html=True)
+    # --- Display Answer ---
+    st.markdown("## 💡 AI Answer")
+    st.markdown(f\"\"\"\n    <div style='background: #f0f4f8; padding: 1rem; border-left: 4px solid #007acc; border-radius: 6px;'>\n    {llm_response}\n    </div>\n\"\"\", unsafe_allow_html=True)
 
-        st.markdown("## 📚 Source Paragraphs")
-        for chap, para, score in top_matches:
-            st.markdown(f"**{chap}** (score: {score:.2f})")
-            st.code(para[:1000])
+    # --- Show Source Chunks ---
+    st.markdown("## 📚 Source Paragraph(s)")
+    for chap, para, score in top_matches:
+        with st.expander(f"{chap}  —  Relevance Score: {score:.2f}", expanded=False):
+            st.code(para.strip()[:1500])  # Show partial match for readability
