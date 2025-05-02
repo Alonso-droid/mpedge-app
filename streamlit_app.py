@@ -124,7 +124,7 @@ available_models = {
 }
 
 # --- Chapter Auto-Suggestion ---
-def auto_detect_chapter(question):
+def auto_detect_chapters(question):
     keywords = {
         # General Procedures
         "application filing": "Chapter 600 – Parts, Form, and Content of Application",
