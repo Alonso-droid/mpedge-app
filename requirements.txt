@@ -1,7 +1,7 @@
 streamlit
-PyPDF2
 requests
-thefuzz
-python-Levenshtein
 PyMuPDF==1.23.9
 huggingface_hub
+thefuzz
+python-Levenshtein
+sentence-transformers
