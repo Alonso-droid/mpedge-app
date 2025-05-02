@@ -237,6 +237,10 @@ st.markdown("### 🔍 Ask a Patent Law Question")
 query = st.text_input("Enter your question", placeholder="e.g. What is a restriction requirement?")
 model_name = st.selectbox("Choose a free AI model", list(available_models.keys()))
 
+# 📘 Optional MPEP Index Reference
+st.markdown("#### 📘 Need help finding the right chapter?")
+st.markdown("[🔗 View the MPEP Subject Matter Index (PDF)](https://www.uspto.gov/web/offices/pac/mpep/mpep-9090-subject-matter-index.pdf)")
+
 # Attempt auto-detect if no chapter is manually selected
 suggested = auto_detect_chapters(query)
 suggested_chapters = [suggested] if suggested else []
