@@ -1,3 +1,4 @@
+
 import streamlit as st
 import requests
 import fitz  # PyMuPDF
@@ -54,51 +55,21 @@ st.markdown("""
     </div>
 """, unsafe_allow_html=True)
 
-# --- Repaired Chapter Data ---
-chapter_data = [
-    {"Chapter": "Foreword", "Title": "Foreword", "PDF": "https://www.uspto.gov/web/offices/pac/mpep/mpep-0015-foreword.pdf"},
-    {"Chapter": "Introduction", "Title": "Introduction", "PDF": "https://www.uspto.gov/web/offices/pac/mpep/mpep-0020-introduction.pdf"},
-    {"Chapter": "TOC", "Title": "Table of Contents", "PDF": "https://www.uspto.gov/web/offices/pac/mpep/mpep-0000-table-of-contents.pdf"},
-    {"Chapter": "100", "Title": "Secrecy, Access, National Security, and Foreign Filing", "PDF": "https://www.uspto.gov/web/offices/pac/mpep/mpep-0100.pdf"},
-    {"Chapter": "200", "Title": "Types and Status of Application; Benefit and Priority Claims", "PDF": "https://www.uspto.gov/web/offices/pac/mpep/mpep-0200.pdf"},
-    {"Chapter": "300", "Title": "Ownership and Assignment", "PDF": "https://www.uspto.gov/web/offices/pac/mpep/mpep-0300.pdf"},
-    {"Chapter": "400", "Title": "Representative of Applicant or Owner", "PDF": "https://www.uspto.gov/web/offices/pac/mpep/mpep-0400.pdf"},
-    {"Chapter": "500", "Title": "Receipt and Handling of Mail and Papers", "PDF": "https://www.uspto.gov/web/offices/pac/mpep/mpep-0500.pdf"},
-    {"Chapter": "600", "Title": "Parts, Form, and Content of Application", "PDF": "https://www.uspto.gov/web/offices/pac/mpep/mpep-0600.pdf"},
-    {"Chapter": "700", "Title": "Examination of Applications", "PDF": "https://www.uspto.gov/web/offices/pac/mpep/mpep-0700.pdf"},
-    {"Chapter": "800", "Title": "Restriction in Applications Filed Under 35 U.S.C. 111; Double Patenting", "PDF": "https://www.uspto.gov/web/offices/pac/mpep/mpep-0800.pdf"},
-    {"Chapter": "900", "Title": "Prior Art, Classification, and Search", "PDF": "https://www.uspto.gov/web/offices/pac/mpep/mpep-0900.pdf"},
-    {"Chapter": "1000", "Title": "Matters Decided by Various U.S. Patent and Trademark Office Officials", "PDF": "https://www.uspto.gov/web/offices/pac/mpep/mpep-1000.pdf"},
-    {"Chapter": "1100", "Title": "Statutory Invention Registration (SIR); Pre-Grant Publication (PGPub)", "PDF": "https://www.uspto.gov/web/offices/pac/mpep/mpep-1100.pdf"},
-    {"Chapter": "1200", "Title": "Appeal", "PDF": "https://www.uspto.gov/web/offices/pac/mpep/mpep-1200.pdf"},
-    {"Chapter": "1300", "Title": "Allowances and Issue", "PDF": "https://www.uspto.gov/web/offices/pac/mpep/mpep-1300.pdf"},
-    {"Chapter": "1400", "Title": "Correction of Patents", "PDF": "https://www.uspto.gov/web/offices/pac/mpep/mpep-1400.pdf"},
-    {"Chapter": "1500", "Title": "Design Patents", "PDF": "https://www.uspto.gov/web/offices/pac/mpep/mpep-1500.pdf"},
-    {"Chapter": "1600", "Title": "Plant Patents", "PDF": "https://www.uspto.gov/web/offices/pac/mpep/mpep-1600.pdf"},
-    {"Chapter": "1700", "Title": "Miscellaneous", "PDF": "https://www.uspto.gov/web/offices/pac/mpep/mpep-1700.pdf"},
-    {"Chapter": "1800", "Title": "Patent Cooperation Treaty", "PDF": "https://www.uspto.gov/web/offices/pac/mpep/mpep-1800.pdf"},
-    {"Chapter": "1900", "Title": "Protest and Pre-Issuance Opposition", "PDF": "https://www.uspto.gov/web/offices/pac/mpep/mpep-1900.pdf"},
-    {"Chapter": "2000", "Title": "Duty of Disclosure", "PDF": "https://www.uspto.gov/web/offices/pac/mpep/mpep-2000.pdf"},
-    {"Chapter": "2100", "Title": "Patentability", "PDF": "https://www.uspto.gov/web/offices/pac/mpep/mpep-2100.pdf"},
-    {"Chapter": "2200", "Title": "Citation of Prior Art and Ex Parte Reexamination of Patents", "PDF": "https://www.uspto.gov/web/offices/pac/mpep/mpep-2200.pdf"},
-    {"Chapter": "2300", "Title": "Interference Proceedings", "PDF": "https://www.uspto.gov/web/offices/pac/mpep/mpep-2300.pdf"},
-    {"Chapter": "2400", "Title": "Biotechnology", "PDF": "https://www.uspto.gov/web/offices/pac/mpep/mpep-2400.pdf"},
-    {"Chapter": "2500", "Title": "Maintenance Fees", "PDF": "https://www.uspto.gov/web/offices/pac/mpep/mpep-2500.pdf"},
-    {"Chapter": "2600", "Title": "Optional Inter Partes Reexamination", "PDF": "https://www.uspto.gov/web/offices/pac/mpep/mpep-2600.pdf"},
-    {"Chapter": "2700", "Title": "Patent Terms, Adjustments, and Extensions", "PDF": "https://www.uspto.gov/web/offices/pac/mpep/mpep-2700.pdf"},
-    {"Chapter": "2800", "Title": "Supplemental Examination", "PDF": "https://www.uspto.gov/web/offices/pac/mpep/mpep-2800.pdf"},
-    {"Chapter": "2900", "Title": "International Design Applications", "PDF": "https://www.uspto.gov/web/offices/pac/mpep/mpep-2900.pdf"},
-    {"Chapter": "Appendix R", "Title": "Patent Rules", "PDF": "https://www.uspto.gov/web/offices/pac/mpep/mpep-appendix-r-patent-rules.pdf"},
-    {"Chapter": "Appendix T", "Title": "Patent Cooperation Treaty", "PDF": "https://www.uspto.gov/web/offices/pac/mpep/mpep-appendix-t-pct.pdf"},
-    {"Chapter": "Appendix AI", "Title": "Administrative Instructions", "PDF": "https://www.uspto.gov/web/offices/pac/mpep/mpep-appendix-ai-admininstr.pdf"},
-    {"Chapter": "Appendix P", "Title": "Paris Convention", "PDF": "https://www.uspto.gov/web/offices/pac/mpep/mpep-appendix-p-paris.pdf"},
-    {"Chapter": "Index", "Title": "Subject Matter Index", "PDF": "https://www.uspto.gov/web/offices/pac/mpep/mpep-index.pdf"}
-]
+# --- Model Selection ---
+model_options = {
+    "🪶 Phi-3 Mini": "microsoft/Phi-3-mini-4k-instruct",
+    "🔎 OLMo 1B": "allenai/OLMo-2-0425-1B",
+    "🧠 Mistral 7B": "mistralai/Mistral-7B-Instruct-v0.1"
+}
+model_choice = st.selectbox("🧠 Choose a model to use", list(model_options.keys()))
+model_id = model_options[model_choice]
 
+# --- Full MPEP Chapter List ---
+chapter_data = pd.read_csv("https://raw.githubusercontent.com/Alonso-droid/mpedge-app/main/mpep_chapter_index.csv").to_dict(orient='records')
 chapter_df = pd.DataFrame(chapter_data)
 chapter_to_url = dict(zip(
-    ["Chapter " + row["Chapter"] + " – " + row["Title"] for _, row in chapter_df.iterrows()],
-    chapter_df["PDF"]
+    ["Chapter " + row["Chapter"] + " – " + row["Title"] for row in chapter_data],
+    [row["PDF"] for row in chapter_data]
 ))
 chapter_names = list(chapter_to_url.keys())
 
@@ -109,7 +80,8 @@ with st.container():
     selected_chapters = st.multiselect("📚 Select up to 3 MPEP chapters", chapter_names, max_selections=3)
     deep_search = st.checkbox("🔎 Enable Detailed Search Mode (runs separate searches for each chapter)")
 
-@st.cache_data(show_spinner="📥 Loading chapter PDF...")
+# --- Auto-detect chapter ---
+@st.cache_data(show_spinner="📥 Loading PDF...")
 def download_pdf_text(url, max_chars=5000):
     response = requests.get(url)
     response.raise_for_status()
@@ -117,10 +89,30 @@ def download_pdf_text(url, max_chars=5000):
         doc = fitz.open(stream=f.read(), filetype="pdf")
         return "\n".join([page.get_text() for page in doc])[:max_chars]
 
+# Simple keyword matching for auto-detection
+def auto_detect_chapter(question):
+    keywords = {
+        "delay": "2700", "adjustment": "2700", "term": "2700", "extension": "2700",
+        "supplemental": "2800", "international": "2900", "design": "2900"
+    }
+    q = question.lower()
+    for word, chap in keywords.items():
+        if word in q:
+            matches = chapter_df[chapter_df["Chapter"] == chap]
+            if not matches.empty:
+                row = matches.iloc[0]
+                return f"Chapter {row['Chapter']} – {row['Title']}"
+    return None
+
 if st.button("🔍 Search") and question:
     if not selected_chapters:
-        st.warning("⚠️ Please select at least one chapter.")
-    else:
+        auto_chap = auto_detect_chapter(question)
+        if auto_chap:
+            selected_chapters = [auto_chap]
+            st.info(f"✅ Auto-detected likely chapter: **{auto_chap}**")
+        else:
+            st.warning("⚠️ Please select at least one chapter.")
+    if selected_chapters:
         key = os.getenv("HUGGINGFACE_API_KEY")
         if not key:
             st.error("🔐 Hugging Face API key not found.")
@@ -131,11 +123,9 @@ if st.button("🔍 Search") and question:
                 for chap in selected_chapters:
                     try:
                         raw = download_pdf_text(chapter_to_url[chap])
-                        payload = {
-                            "inputs": f"Question: {question}\n\nContext:\n{raw}",
-                            "parameters": {"max_new_tokens": 200}
-                        }
-                        r = requests.post("https://api-inference.huggingface.co/models/google/flan-t5-base", headers=headers, json=payload)
+                        prompt = f"Question: {question}\n\nContext:\n{raw}"
+                        payload = {"inputs": prompt, "parameters": {"max_new_tokens": 200}}
+                        r = requests.post(f"https://api-inference.huggingface.co/models/{model_id}", headers=headers, json=payload)
                         if r.status_code == 200:
                             out = r.json()
                             ans = out[0]['generated_text'] if isinstance(out, list) else out
@@ -156,11 +146,9 @@ if st.button("🔍 Search") and question:
                         context += f"\n\n---\n\n{chap}\n" + download_pdf_text(chapter_to_url[chap])
                     except Exception as e:
                         st.warning(f"⚠️ Skipping {chap}: {e}")
-                payload = {
-                    "inputs": f"Question: {question}\n\nContext:\n{context[:15000]}",
-                    "parameters": {"max_new_tokens": 200}
-                }
-                r = requests.post("https://api-inference.huggingface.co/models/google/flan-t5-base", headers=headers, json=payload)
+                prompt = f"Question: {question}\n\nContext:\n{context[:15000]}"
+                payload = {"inputs": prompt, "parameters": {"max_new_tokens": 200}}
+                r = requests.post(f"https://api-inference.huggingface.co/models/{model_id}", headers=headers, json=payload)
                 if r.status_code == 200:
                     out = r.json()
                     ans = out[0]['generated_text'] if isinstance(out, list) else out
