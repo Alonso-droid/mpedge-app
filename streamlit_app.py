@@ -102,161 +102,135 @@ chapter_names = list(chapter_to_url.keys())
 
 
 # --- Chapter Auto-Suggestion ---
-def auto_detect_chapters(question):
-    keywords = {
-        # General Procedures
-        "application filing": "Chapter 600 – Parts, Form, and Content of Application",
-        "drawings": "Chapter 600 – Parts, Form, and Content of Application",
-        "claims": "Chapter 600 – Parts, Form, and Content of Application",
-        "specification": "Chapter 600 – Parts, Form, and Content of Application",
-
-        # Patentability & Examination
-        "obviousness": "Chapter 2100 – Patentability",
-        "35 usc 103": "Chapter 2100 – Patentability",
-        "35 usc 102": "Chapter 2100 – Patentability",
-        "patentable subject matter": "Chapter 2100 – Patentability",
-        "double patenting": "Chapter 800 – Restriction in Applications Filed Under 35 U.S.C. 111; Double Patenting",
-        "unity of invention": "Chapter 800 – Restriction in Applications Filed Under 35 U.S.C. 111; Double Patenting",
-        "restriction": "Chapter 800 – Restriction in Applications Filed Under 35 U.S.C. 111; Double Patenting",
-        "examination": "Chapter 700 – Examination of Applications",
-        "interview": "Chapter 700 – Examination of Applications",
-        "final rejection": "Chapter 700 – Examination of Applications",
-
-        # Appeals & Rejections
-        "appeal": "Chapter 1200 – Appeal",
-        "ptab": "Chapter 1200 – Appeal",
-        "rehearing": "Chapter 1200 – Appeal",
-        "pre-appeal": "Chapter 1200 – Appeal",
-
-        # Prior Art & References
-        "prior art": "Chapter 2200 – Citation of Prior Art and Ex Parte Reexamination of Patents",
-        "103 rejection": "Chapter 2100 – Patentability",
-        "102 rejection": "Chapter 2100 – Patentability",
-        "publication": "Chapter 1100 – Statutory Invention Registration (SIR); Pre-Grant Publication (PGPub)",
-        "non-patent literature": "Chapter 2200 – Citation of Prior Art and Ex Parte Reexamination of Patents",
-
-        # Representation & Access
-        "power of attorney": "Chapter 400 – Representative of Applicant or Owner",
-        "attorney": "Chapter 400 – Representative of Applicant or Owner",
-        "access to application": "Chapter 100 – Secrecy, Access, National Security, and Foreign Filing",
-        "secrecy order": "Chapter 100 – Secrecy, Access, National Security, and Foreign Filing",
-
-        # Assignments & Ownership
-        "assignment": "Chapter 300 – Ownership and Assignment",
-        "change of ownership": "Chapter 300 – Ownership and Assignment",
-
-        # National & International Filing
-        "foreign filing license": "Chapter 100 – Secrecy, Access, National Security, and Foreign Filing",
-        "pct application": "Chapter 1800 – Patent Cooperation Treaty",
-        "international phase": "Chapter 1800 – Patent Cooperation Treaty",
-        "national stage": "Chapter 1800 – Patent Cooperation Treaty",
-        "wipo": "Chapter 1800 – Patent Cooperation Treaty",
-
-        # Special Application Types
-        "design patent": "Chapter 1500 – Design Patents",
-        "plant patent": "Chapter 1600 – Plant Patents",
-        "reissue": "Chapter 1400 – Correction of Patents",
-        "continuation": "Chapter 200 – Types and Status of Application; Benefit and Priority Claims",
-        "continuation-in-part": "Chapter 200 – Types and Status of Application; Benefit and Priority Claims",
-        "divisional": "Chapter 200 – Types and Status of Application; Benefit and Priority Claims",
-
-        # Disclosure & Duty
-        "duty of disclosure": "Chapter 2000 – Duty of Disclosure",
-        "ids": "Chapter 2000 – Duty of Disclosure",
-        "rule 56": "Chapter 2000 – Duty of Disclosure",
-
-        # Other
-        "protest": "Chapter 1900 – Protest",
-        "maintenance fees": "Chapter 2500 – Maintenance Fees",
-        "subject matter index": "Chapter 9090 – Subject Matter Index",
-        "petition": "Chapter 1000 – Matters Decided by Various U.S. Patent and Trademark Office Officials"
-
-         # --- Patentability (Chapter 2100) ---
+def auto_detect_chapter(question):
+    keyword_to_chapter = {
+        # --- Patentability & Rejections ---
         "101": "Chapter 2100 – Patentability",
+        "section 101": "Chapter 2100 – Patentability",
         "section 102": "Chapter 2100 – Patentability",
         "section 103": "Chapter 2100 – Patentability",
-        "statutory subject matter": "Chapter 2100 – Patentability",
+        "35 usc 102": "Chapter 2100 – Patentability",
+        "35 usc 103": "Chapter 2100 – Patentability",
+        "obviousness": "Chapter 2100 – Patentability",
+        "non-obvious": "Chapter 2100 – Patentability",
+        "novelty": "Chapter 2100 – Patentability",
+        "enablement": "Chapter 2100 – Patentability",
+        "written description": "Chapter 2100 – Patentability",
+        "best mode": "Chapter 2100 – Patentability",
+        "utility": "Chapter 2100 – Patentability",
         "abstract idea": "Chapter 2100 – Patentability",
+        "statutory subject matter": "Chapter 2100 – Patentability",
         "algorithm": "Chapter 2100 – Patentability",
+        "103 rejection": "Chapter 2100 – Patentability",
+        "102 rejection": "Chapter 2100 – Patentability",
 
-        # --- Rejections (Chapters 800, 2100) ---
-        "double patenting": "Chapter 800 – Restriction in Applications Filed Under 35 U.S.C. 111; Double Patenting",
-        "restriction requirement": "Chapter 800 – Restriction in Applications Filed Under 35 U.S.C. 111; Double Patenting",
-        "generic claim": "Chapter 800 – Restriction in Applications Filed Under 35 U.S.C. 111; Double Patenting",
-
-        # --- Application Filing (Chapters 600, 200) ---
-        "claims": "Chapter 600 – Parts, Form, and Content of Application",
-        "abstract": "Chapter 600 – Parts, Form, and Content of Application",
-        "drawings": "Chapter 600 – Parts, Form, and Content of Application",
-        "specification": "Chapter 600 – Parts, Form, and Content of Application",
-        "continuation": "Chapter 200 – Types and Status of Application; Benefit and Priority Claims",
-        "continuation-in-part": "Chapter 200 – Types and Status of Application; Benefit and Priority Claims",
-        "divisional": "Chapter 200 – Types and Status of Application; Benefit and Priority Claims",
-        "priority claim": "Chapter 200 – Types and Status of Application; Benefit and Priority Claims",
-        "provisional application": "Chapter 200 – Types and Status of Application; Benefit and Priority Claims",
-
-        # --- Examination (Chapter 700) ---
+        # --- Examination ---
         "office action": "Chapter 700 – Examination of Applications",
         "final rejection": "Chapter 700 – Examination of Applications",
         "non-final rejection": "Chapter 700 – Examination of Applications",
         "amendment": "Chapter 700 – Examination of Applications",
         "examination": "Chapter 700 – Examination of Applications",
         "reply brief": "Chapter 700 – Examination of Applications",
+        "interview": "Chapter 700 – Examination of Applications",
 
-        # --- Appeal (Chapter 1200) ---
+        # --- Filing and Specification ---
+        "claims": "Chapter 600 – Parts, Form, and Content of Application",
+        "abstract": "Chapter 600 – Parts, Form, and Content of Application",
+        "drawings": "Chapter 600 – Parts, Form, and Content of Application",
+        "specification": "Chapter 600 – Parts, Form, and Content of Application",
+
+        # --- Restriction & Double Patenting ---
+        "restriction requirement": "Chapter 800 – Restriction in Applications Filed Under 35 U.S.C. 111; Double Patenting",
+        "double patenting": "Chapter 800 – Restriction in Applications Filed Under 35 U.S.C. 111; Double Patenting",
+        "generic claim": "Chapter 800 – Restriction in Applications Filed Under 35 U.S.C. 111; Double Patenting",
+        "unity of invention": "Chapter 800 – Restriction in Applications Filed Under 35 U.S.C. 111; Double Patenting",
+
+        # --- Application Types ---
+        "continuation": "Chapter 200 – Types and Status of Application; Benefit and Priority Claims",
+        "continuation-in-part": "Chapter 200 – Types and Status of Application; Benefit and Priority Claims",
+        "divisional": "Chapter 200 – Types and Status of Application; Benefit and Priority Claims",
+        "provisional application": "Chapter 200 – Types and Status of Application; Benefit and Priority Claims",
+        "priority claim": "Chapter 200 – Types and Status of Application; Benefit and Priority Claims",
+
+        # --- Appeals ---
         "appeal": "Chapter 1200 – Appeal",
         "ptab": "Chapter 1200 – Appeal",
         "board of appeals": "Chapter 1200 – Appeal",
+        "rehearing": "Chapter 1200 – Appeal",
+        "pre-appeal": "Chapter 1200 – Appeal",
 
-        # --- Disclosure (Chapter 2000) ---
+        # --- Disclosure Requirements ---
         "ids": "Chapter 2000 – Duty of Disclosure",
         "information disclosure statement": "Chapter 2000 – Duty of Disclosure",
+        "duty of disclosure": "Chapter 2000 – Duty of Disclosure",
         "rule 56": "Chapter 2000 – Duty of Disclosure",
 
-        # --- Fees (Chapter 2500) ---
+        # --- Prior Art & Reexamination ---
+        "prior art": "Chapter 2200 – Citation of Prior Art and Ex Parte Reexamination of Patents",
+        "non-patent literature": "Chapter 2200 – Citation of Prior Art and Ex Parte Reexamination of Patents",
+        "reexamination": "Chapter 2200 – Citation of Prior Art and Ex Parte Reexamination of Patents",
+        "ex parte": "Chapter 2200 – Citation of Prior Art and Ex Parte Reexamination of Patents",
+
+        # --- International Filing ---
+        "pct": "Chapter 1800 – Patent Cooperation Treaty",
+        "pct application": "Chapter 1800 – Patent Cooperation Treaty",
+        "foreign filing": "Chapter 1800 – Patent Cooperation Treaty",
+        "foreign filing license": "Chapter 1800 – Patent Cooperation Treaty",
+        "wipo": "Chapter 1800 – Patent Cooperation Treaty",
+        "national phase": "Chapter 1800 – Patent Cooperation Treaty",
+        "international phase": "Chapter 1800 – Patent Cooperation Treaty",
+
+        # --- Design & Plant Patents ---
+        "design patent": "Chapter 1500 – Design Patents",
+        "ornamental": "Chapter 1500 – Design Patents",
+        "plant patent": "Chapter 1600 – Plant Patents",
+
+        # --- Correction & Reissue ---
+        "reissue": "Chapter 1400 – Correction of Patents",
+
+        # --- Assignments ---
+        "assignment": "Chapter 300 – Ownership and Assignment",
+        "ownership": "Chapter 300 – Ownership and Assignment",
+        "change of ownership": "Chapter 300 – Ownership and Assignment",
+
+        # --- Representation & Power of Attorney ---
+        "power of attorney": "Chapter 400 – Representative of Applicant or Owner",
+        "attorney": "Chapter 400 – Representative of Applicant or Owner",
+        "attorney of record": "Chapter 400 – Representative of Applicant or Owner",
+
+        # --- Secrecy & National Security ---
+        "secrecy order": "Chapter 100 – Secrecy, Access, National Security, and Foreign Filing",
+        "classified": "Chapter 100 – Secrecy, Access, National Security, and Foreign Filing",
+        "access to application": "Chapter 100 – Secrecy, Access, National Security, and Foreign Filing",
+
+        # --- Biotechnology ---
+        "deposit": "Chapter 2400 – Biotechnology",
+        "biological material": "Chapter 2400 – Biotechnology",
+
+        # --- Publication & Pre-Grant Disclosure ---
+        "publication": "Chapter 1100 – Statutory Invention Registration (SIR); Pre-Grant Publication (PGPub)",
+        "pre-grant": "Chapter 1100 – Statutory Invention Registration (SIR); Pre-Grant Publication (PGPub)",
+        "sir": "Chapter 1100 – Statutory Invention Registration (SIR); Pre-Grant Publication (PGPub)",
+
+        # --- Protests & Petitions ---
+        "protest": "Chapter 1900 – Protest",
+        "petition": "Chapter 1000 – Matters Decided by Various U.S. Patent and Trademark Office Officials",
+
+        # --- Fees ---
         "maintenance fee": "Chapter 2500 – Maintenance Fees",
         "fee payment": "Chapter 2500 – Maintenance Fees",
         "late fee": "Chapter 2500 – Maintenance Fees",
 
-        # --- Design Patents (Chapter 1500) ---
-        "design patent": "Chapter 1500 – Design Patents",
-        "ornamental": "Chapter 1500 – Design Patents",
-
-        # --- International (Chapter 1800) ---
-        "pct": "Chapter 1800 – Patent Cooperation Treaty",
-        "foreign filing": "Chapter 1800 – Patent Cooperation Treaty",
-        "national phase": "Chapter 1800 – Patent Cooperation Treaty",
-
-        # --- Representation (Chapter 400) ---
-        "power of attorney": "Chapter 400 – Representative of Applicant or Owner",
-        "attorney of record": "Chapter 400 – Representative of Applicant or Owner",
-
-        # --- Ownership & Assignment (Chapter 300) ---
-        "assignment": "Chapter 300 – Ownership and Assignment",
-        "ownership": "Chapter 300 – Ownership and Assignment",
-
-        # --- Biotechnology (Chapter 2400) ---
-        "deposit": "Chapter 2400 – Biotechnology",
-        "biological material": "Chapter 2400 – Biotechnology",
-
-        # --- Secrecy & Security (Chapter 100) ---
-        "secrecy order": "Chapter 100 – Secrecy, Access, National Security, and Foreign Filing",
-        "classified": "Chapter 100 – Secrecy, Access, National Security, and Foreign Filing",
-
-        # --- Pre-AIA (Chapter 1100) ---
-        "sir": "Chapter 1100 – Statutory Invention Registration (SIR); Pre-Grant Publication (PGPub)",
-        "pre-grant": "Chapter 1100 – Statutory Invention Registration (SIR); Pre-Grant Publication (PGPub)",
-
-        # --- Reexamination (Chapter 2200) ---
-        "reexamination": "Chapter 2200 – Citation of Prior Art and Ex Parte Reexamination of Patents",
-        "ex parte": "Chapter 2200 – Citation of Prior Art and Ex Parte Reexamination of Patents",
+        # --- Misc & Index ---
+        "subject matter index": "Chapter 9090 – Subject Matter Index"
     }
 
     question_lower = question.lower()
-    for keyword, chapter in keywords.items():
+    for keyword, chapter in keyword_to_chapter.items():
         if keyword in question_lower:
             return chapter
     return None
+
 
 # === Part 4: PDF Processing and Embedding ===
 
