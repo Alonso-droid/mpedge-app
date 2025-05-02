@@ -93,17 +93,80 @@ available_models = {
 # --- Chapter Auto-Suggestion ---
 def auto_detect_chapter(question):
     keywords = {
-        "restriction": "Chapter 800 – Restriction in Applications Filed Under 35 U.S.C. 111; Double Patenting",
+        # General Procedures
+        "application filing": "Chapter 600 – Parts, Form, and Content of Application",
+        "drawings": "Chapter 600 – Parts, Form, and Content of Application",
+        "claims": "Chapter 600 – Parts, Form, and Content of Application",
+        "specification": "Chapter 600 – Parts, Form, and Content of Application",
+
+        # Patentability & Examination
         "obviousness": "Chapter 2100 – Patentability",
+        "35 usc 103": "Chapter 2100 – Patentability",
+        "novelty": "Chapter 2100 – Patentability",
+        "35 usc 102": "Chapter 2100 – Patentability",
+        "patentable subject matter": "Chapter 2100 – Patentability",
+        "section 101": "Chapter 2100 – Patentability",
+        "double patenting": "Chapter 800 – Restriction in Applications Filed Under 35 U.S.C. 111; Double Patenting",
+        "unity of invention": "Chapter 800 – Restriction in Applications Filed Under 35 U.S.C. 111; Double Patenting",
+        "restriction": "Chapter 800 – Restriction in Applications Filed Under 35 U.S.C. 111; Double Patenting",
+        "examination": "Chapter 700 – Examination of Applications",
+        "interview": "Chapter 700 – Examination of Applications",
+        "final rejection": "Chapter 700 – Examination of Applications",
+
+        # Appeals & Rejections
         "appeal": "Chapter 1200 – Appeal",
-        "drawing": "Chapter 600 – Parts, Form, and Content of Application",
+        "ptab": "Chapter 1200 – Appeal",
+        "rehearing": "Chapter 1200 – Appeal",
+        "pre-appeal": "Chapter 1200 – Appeal",
+
+        # Prior Art & References
         "prior art": "Chapter 2200 – Citation of Prior Art and Ex Parte Reexamination of Patents",
-        "design": "Chapter 1500 – Design Patents",
-        "examination": "Chapter 700 – Examination of Applications"
+        "103 rejection": "Chapter 2100 – Patentability",
+        "102 rejection": "Chapter 2100 – Patentability",
+        "publication": "Chapter 1100 – Statutory Invention Registration (SIR); Pre-Grant Publication (PGPub)",
+        "non-patent literature": "Chapter 2200 – Citation of Prior Art and Ex Parte Reexamination of Patents",
+
+        # Representation & Access
+        "power of attorney": "Chapter 400 – Representative of Applicant or Owner",
+        "attorney": "Chapter 400 – Representative of Applicant or Owner",
+        "access to application": "Chapter 100 – Secrecy, Access, National Security, and Foreign Filing",
+        "secrecy order": "Chapter 100 – Secrecy, Access, National Security, and Foreign Filing",
+
+        # Assignments & Ownership
+        "assignment": "Chapter 300 – Ownership and Assignment",
+        "change of ownership": "Chapter 300 – Ownership and Assignment",
+
+        # National & International Filing
+        "foreign filing license": "Chapter 100 – Secrecy, Access, National Security, and Foreign Filing",
+        "pct application": "Chapter 1800 – Patent Cooperation Treaty",
+        "international phase": "Chapter 1800 – Patent Cooperation Treaty",
+        "national stage": "Chapter 1800 – Patent Cooperation Treaty",
+        "wipo": "Chapter 1800 – Patent Cooperation Treaty",
+
+        # Special Application Types
+        "design patent": "Chapter 1500 – Design Patents",
+        "plant patent": "Chapter 1600 – Plant Patents",
+        "reissue": "Chapter 1400 – Correction of Patents",
+        "continuation": "Chapter 200 – Types and Status of Application; Benefit and Priority Claims",
+        "continuation-in-part": "Chapter 200 – Types and Status of Application; Benefit and Priority Claims",
+        "divisional": "Chapter 200 – Types and Status of Application; Benefit and Priority Claims",
+
+        # Disclosure & Duty
+        "duty of disclosure": "Chapter 2000 – Duty of Disclosure",
+        "ids": "Chapter 2000 – Duty of Disclosure",
+        "rule 56": "Chapter 2000 – Duty of Disclosure",
+
+        # Other
+        "protest": "Chapter 1900 – Protest",
+        "maintenance fees": "Chapter 2500 – Maintenance Fees",
+        "subject matter index": "Chapter 9090 – Subject Matter Index",
+        "petition": "Chapter 1000 – Matters Decided by Various U.S. Patent and Trademark Office Officials"
     }
-    for key, chap in keywords.items():
-        if key.lower() in question.lower():
-            return chap
+
+    question_lower = question.lower()
+    for keyword, chapter in keywords.items():
+        if keyword in question_lower:
+            return chapter
     return None
 
 # --- PDF Loader with Caching ---
