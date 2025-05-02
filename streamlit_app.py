@@ -12,7 +12,7 @@ import json
 import base64
 from datetime import datetime
 from thefuzz import fuzz
-from sentence_transformers import SentenceTransformer
+from sentence_transformers import SentenceTransformer, util
 import torch
 
 # --- Load Embedder Model ---
