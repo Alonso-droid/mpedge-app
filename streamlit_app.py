@@ -220,7 +220,7 @@ query = st.text_input("Enter your question", placeholder="e.g. What is a restric
 # ✅ Model dictionary with real, working model IDs (free variants where possible)
 available_models = {
     "Mistral 7B (Hugging Face)": {
-        "id": "mistralai/Mistral-7B-Instruct-v0.2",  # correct HF repo
+        "id": "mistralai/Mistral-7B-Instruct-v0.3",  # correct HF repo
         "source": "huggingface"
     },
     "Phi-3 Medium (OpenRouter)": {
