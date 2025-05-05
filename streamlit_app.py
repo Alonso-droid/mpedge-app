@@ -420,8 +420,9 @@ Answer:
         result = query_llm(prompt, model_name)
 
         # --- Debug Output ---
-        st.markdown("### 🐞 Debug Output (developer view)")
+        with st.expander("🐞 Debug Output (developer view)", expanded=False):
         st.json(result)
+
 
         if "output" not in result:
             st.error(f"❌ No usable LLM response.\n\nError: {result.get('error', 'Unknown error')}")
