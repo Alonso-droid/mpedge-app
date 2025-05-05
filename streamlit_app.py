@@ -347,7 +347,7 @@ def query_llm(prompt, primary_model_name):
                 return {"error": "Unexpected HF output format", "raw": data}
 
             elif source == "openrouter":
-                key = os.getenv("OPENROUTER_API_KEY")
+                key = st.secrets.get("OPENROUTER_API_KEY")
                 if not key:
                     return {"error": "Missing OpenRouter API key"}
                 
