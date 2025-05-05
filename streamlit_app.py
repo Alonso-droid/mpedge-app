@@ -346,7 +346,7 @@ def query_llm(prompt, primary_model_name):
                     return {"output": data[0]["generated_text"], "model": model_id}
                 return {"error": "Unexpected HF output format", "raw": data}
 
-           elif source == "openrouter":
+            elif source == "openrouter":
                 key = os.getenv("OPENROUTER_API_KEY")
                 if not key:
                     return {"error": "Missing OpenRouter API key"}
