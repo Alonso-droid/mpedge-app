@@ -33,6 +33,39 @@ lottie_json = load_lottie_url(lottie_url)
 # Show it in the app
 st_lottie(lottie_json, height=300, key="robot")
 
+theme_choice = st.radio("🎨 Choose a Theme", ["Light", "Dark", "Fun"], horizontal=True)
+
+if theme_choice == "Dark":
+    bg_color = "#1e1e1e"
+    text_color = "#ffffff"
+    accent = "#ff69b4"
+elif theme_choice == "Fun":
+    bg_color = "#fff0f6"
+    text_color = "#3c096c"
+    accent = "#f72585"
+else:
+    bg_color = "#ffffff"
+    text_color = "#000000"
+    accent = "#4CAF50"
+
+st.markdown("""
+    <style>
+    h1, h2, h3 {
+        font-family: 'Comic Sans MS', cursive, sans-serif;
+    }
+    .block-container {
+        border-radius: 12px;
+        padding: 2rem;
+    }
+    .stMarkdown {
+        animation: fadein 1.5s ease-in;
+    }
+    @keyframes fadein {
+        from {opacity: 0;}
+        to {opacity: 1;}
+    }
+    </style>
+""", unsafe_allow_html=True)
 
 
 # --- Load Embedder Model ---
@@ -495,6 +528,13 @@ Answer:
 
     # --- Display Final Answer ---
     st.markdown("## 💡 AI Answer")
+    def play_success_sound():
+    st.markdown("""
+        <audio autoplay>
+            <source src="https://www.myinstants.com/media/sounds/applepay.mp3" type="audio/mpeg">
+        </audio>
+    """, unsafe_allow_html=True)
+
     st.markdown(f"""
     <div style='background: #eef6ff; padding: 1rem; border-left: 4px solid #007acc; border-radius: 6px;'>
         {llm_response}
@@ -508,14 +548,7 @@ Answer:
             st.code(para.strip()[:1500])
 
 
-# === Part 8: Rating + History Tracker ===
-
-# --- Rating Section ---
-if st.session_state["last_answer"]:
-    st.markdown("### ⭐ Rate This Answer")
-    rating = st.slider("How helpful was this response?", 1, 5, 3)
-    if rating:
-        st.success("✅ Thanks for your feedback!")
+# === Part 8: History Tracker ===
 
 # --- Session History ---
 st.markdown("### 🕘 Previous Questions")
