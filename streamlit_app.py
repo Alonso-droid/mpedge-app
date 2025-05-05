@@ -15,6 +15,25 @@ from thefuzz import fuzz
 from sentence_transformers import SentenceTransformer, util
 import torch
 
+
+from streamlit_lottie import st_lottie
+import requests
+
+def load_lottie_url(url):
+    r = requests.get(url)
+    if r.status_code != 200:
+        return None
+    return r.json()
+
+# Example Lottie animation (a robot waving)
+lottie_url = "https://assets1.lottiefiles.com/packages/lf20_jcikwtux.json"
+lottie_json = load_lottie_url(lottie_url)
+
+# Show it in the app
+st_lottie(lottie_json, height=300, key="robot")
+
+
+
 # --- Load Embedder Model ---
 @st.cache_resource(show_spinner="🔌 Loading embedding model...")
 def load_embedder():
@@ -51,6 +70,9 @@ render_logo_and_header()
 
 # --- Intro Text ---
 st.markdown("AI-powered search and analysis of the MPEP (Manual of Patent Examining Procedure). Ask a question, and receive an answer with citations from USPTO source material.")
+st.markdown("## 🤖 Hi!")
+st_lottie(lottie_json, height=250)
+st.markdown("This friendly bot is here to help you navigate the MPEP!")
 
 
 # --- Hardcoded MPEP Chapters (Official USPTO PDFs) ---
