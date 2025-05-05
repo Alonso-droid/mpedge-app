@@ -346,17 +346,25 @@ def query_llm(prompt, primary_model_name):
                     return {"output": data[0]["generated_text"], "model": model_id}
                 return {"error": "Unexpected HF output format", "raw": data}
 
-            elif source == "openrouter":
+           elif source == "openrouter":
                 key = os.getenv("OPENROUTER_API_KEY")
                 if not key:
                     return {"error": "Missing OpenRouter API key"}
+                
                 url = "https://openrouter.ai/api/v1/chat/completions"
-                headers = {"Authorization": f"Bearer {key}"}
+                headers = {
+                    "Authorization": f"Bearer {key}",
+                    "Content-Type": "application/json",
+                    "HTTP-Referer": "https://your-site-url.com",  # Optional
+                    "X-Title": "MPEdge"  # Optional
+                }
                 payload = {
                     "model": model_id,
                     "messages": [{"role": "user", "content": prompt}]
                 }
-                r = requests.post(url, headers=headers, json=payload)
+            
+                r = requests.post(url, headers=headers, data=json.dumps(payload))
+
                 if r.status_code == 402:
                     return {"error": "OpenRouter: Insufficient credits", "raw": r.text}
                 if r.status_code == 429:
