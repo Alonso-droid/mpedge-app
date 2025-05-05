@@ -410,6 +410,8 @@ def query_llm(prompt, primary_model_name):
 
     # Fallback attempt
     st.warning(f"⚠️ Primary model failed: {result.get('error')}. Switching to fallback model...")
+    if fallback is None:
+        return {"error": f"No fallback model found for key: {fallback_key}"}
     result_fallback = call_model(fallback)
     return result_fallback if "output" in result_fallback else {"error": "Both models failed", "details": result_fallback}
 
