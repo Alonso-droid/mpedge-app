@@ -529,11 +529,11 @@ Answer:
     # --- Display Final Answer ---
     st.markdown("## 💡 AI Answer")
     def play_success_sound():
-    st.markdown("""
-        <audio autoplay>
-            <source src="https://www.myinstants.com/media/sounds/applepay.mp3" type="audio/mpeg">
-        </audio>
-    """, unsafe_allow_html=True)
+        st.markdown("""
+            <audio autoplay>
+                <source src="https://www.myinstants.com/media/sounds/applepay.mp3" type="audio/mpeg">
+            </audio>
+        """, unsafe_allow_html=True)
 
     st.markdown(f"""
     <div style='background: #eef6ff; padding: 1rem; border-left: 4px solid #007acc; border-radius: 6px;'>
