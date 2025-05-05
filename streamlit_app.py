@@ -14,8 +14,8 @@ from datetime import datetime
 from thefuzz import fuzz
 from sentence_transformers import SentenceTransformer, util
 import torch
-from streamlit_lottie import st_lottie
 import requests
+from streamlit_lottie import st_lottie
 
 # --- Page Configuration ---
 st.set_page_config(page_title="MPEdge", layout="wide")
