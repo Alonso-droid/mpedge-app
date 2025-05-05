@@ -187,6 +187,7 @@ def auto_detect_chapters(question):
 
         # --- Correction & Reissue ---
         "reissue": "Chapter 1400 – Correction of Patents",
+        "re-issue": "Chapter 1400 – Correction of Patents",
 
         # --- Assignments ---
         "assignment": "Chapter 300 – Ownership and Assignment",
@@ -271,27 +272,52 @@ query = st.text_input("Enter your question", placeholder="e.g. What is a restric
 
 # ✅ Model dictionary with real, working model IDs (free variants where possible)
 available_models = {
-    "Mistral 7B (Hugging Face)": {
-        "id": "mistralai/Mistral-7B-Instruct-v0.3",  # correct HF repo
-        "source": "huggingface"
-    },
-    "Phi-3 Medium (OpenRouter)": {
-        "id": "microsoft/phi-3-medium-128k-instruct",
+    "LLaMA 4 Maverick (OpenRouter)": {
+        "id": "meta-llama/llama-4-maverick:free",
         "source": "openrouter"
     },
-    "OpenChat 7B (OpenRouter)": {
-        "id": "openchat/openchat-7b",
+    "LLaMA 4 Scout (OpenRouter)": {
+        "id": "meta-llama/llama-4-scout:free",
         "source": "openrouter"
     },
-    "DeepSeek Chat (OpenRouter)": {
-        "id": "deepseek/deepseek-llm-7b-chat",
+    "Kimi VL A3B Thinking (OpenRouter)": {
+        "id": "moonshotai/kimi-vl-a3b-thinking:free",
         "source": "openrouter"
     },
-    "OLMo 2 (OpenRouter)": {
-        "id": "allenai/OLMo-2-0425-1B-Instruct",
+    "NVIDIA Nemotron Nano 8B (OpenRouter)": {
+        "id": "nvidia/llama-3.1-nemotron-nano-8b-v1:free",
+        "source": "openrouter"
+    },
+    "Gemini 2.5 Pro Experimental (OpenRouter)": {
+        "id": "google/gemini-2.5-pro-exp-03-25:free",
+        "source": "openrouter"
+    },
+    "Mistral Small 3.1 24B Instruct (OpenRouter)": {
+        "id": "mistralai/mistral-small-3.1-24b-instruct:free",
+        "source": "openrouter"
+    },
+    "DeepSeek R1 (OpenRouter)": {
+        "id": "deepseek/deepseek-r1:free",
+        "source": "openrouter"
+    },
+    "DeepSeek Chat V3 (OpenRouter)": {
+        "id": "deepseek/deepseek-chat-v3-0324:free",
+        "source": "openrouter"
+    },
+    "DeepSeek R1 Zero (OpenRouter)": {
+        "id": "deepseek/deepseek-r1-zero:free",
+        "source": "openrouter"
+    },
+    "Qwen2.5 VL 3B Instruct (OpenRouter)": {
+        "id": "qwen/qwen2.5-vl-3b-instruct:free",
+        "source": "openrouter"
+    },
+    "DeepHermes 3 LLaMA 3 8B Preview (OpenRouter)": {
+        "id": "nousresearch/deephermes-3-llama-3-8b-preview:free",
         "source": "openrouter"
     }
 }
+
 
 # Dropdown for selecting a model
 model_name = st.selectbox("Choose a free AI model", list(available_models.keys()))
