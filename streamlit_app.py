@@ -14,10 +14,11 @@ from datetime import datetime
 from thefuzz import fuzz
 from sentence_transformers import SentenceTransformer, util
 import torch
-
-
 from streamlit_lottie import st_lottie
 import requests
+
+# --- Page Configuration ---
+st.set_page_config(page_title="MPEdge", layout="wide")
 
 def load_lottie_url(url):
     r = requests.get(url)
@@ -52,9 +53,6 @@ if "last_answer" not in st.session_state:
     st.session_state["last_answer"] = None
 
 # === Part 2: Logo, Page Setup, and UI Theme ===
-
-# --- Page Configuration ---
-st.set_page_config(page_title="MPEdge", layout="wide")
 
 # --- Header with Logo ---
 def render_logo_and_header():
