@@ -6,3 +6,4 @@ python-Levenshtein
 sentence-transformers
 torch
 huggingface_hub
+streamlit-lottie
