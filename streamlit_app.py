@@ -68,9 +68,7 @@ render_logo_and_header()
 
 # --- Intro Text ---
 st.markdown("AI-powered search and analysis of the MPEP (Manual of Patent Examining Procedure). Ask a question, and receive an answer with citations from USPTO source material.")
-st.markdown("## 🤖 Hi!")
-st_lottie(lottie_json, height=250)
-st.markdown("This friendly bot is here to help you navigate the MPEP!")
+
 
 
 # --- Hardcoded MPEP Chapters (Official USPTO PDFs) ---
