@@ -33,7 +33,7 @@ Installation
 
 Clone the repository:
 
-bashgit clone [https://github.com/yourusername/mpedge-app.git](https://github.com/Alonso-droid/mpedge-app)
+bashgit clone https://github.com/Alonso-droid/mpedge-app
 cd mpedge-app
 
 Install the required packages:
