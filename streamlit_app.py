@@ -329,7 +329,7 @@ def query_llm(prompt, primary_model_name):
 
         try:
             if source == "huggingface":
-                key = os.getenv("HUGGINGFACE_API_KEY")
+                key = st.secrets.get("HUGGINGFACE_API_KEY")
                 if not key:
                     return {"error": "Missing Hugging Face API key"}
                 url = f"https://api-inference.huggingface.co/models/{model_id}"
