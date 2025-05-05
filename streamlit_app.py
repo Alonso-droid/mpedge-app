@@ -276,19 +276,19 @@ available_models = {
         "source": "huggingface"
     },
     "Phi-3 Medium (OpenRouter)": {
-        "id": "microsoft/phi-3-medium-128k-instruct:free",
+        "id": "microsoft/phi-3-medium-128k-instruct",
         "source": "openrouter"
     },
     "OpenChat 7B (OpenRouter)": {
-        "id": "openchat/openchat-7b:free",
+        "id": "openchat/openchat-7b",
         "source": "openrouter"
     },
     "DeepSeek Chat (OpenRouter)": {
-        "id": "deepseek/deepseek-llm-7b-chat:free",
+        "id": "deepseek/deepseek-llm-7b-chat",
         "source": "openrouter"
     },
     "OLMo 2 (OpenRouter)": {
-        "id": "allenai/OLMo-2-0425-1B-Instruct:free",
+        "id": "allenai/OLMo-2-0425-1B-Instruct",
         "source": "openrouter"
     }
 }
