@@ -421,7 +421,7 @@ Answer:
 
         # --- Debug Output ---
         with st.expander("🐞 Debug Output (developer view)", expanded=False):
-        st.json(result)
+            st.json(result)
 
 
         if "output" not in result:
